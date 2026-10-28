@@ -146,7 +146,7 @@ test.describe("live backend UAT release gate", () => {
   test("public catalog loads through the Next proxy", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: /Skills for your future/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Skills for your next chapter/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "All courses" })).toBeVisible();
     await page.getByRole("textbox", { name: "Search keywords", exact: true }).fill("Spring Boot Production APIs");
     await expect(page.getByRole("heading", { name: "Spring Boot Production APIs", exact: true })).toBeVisible();

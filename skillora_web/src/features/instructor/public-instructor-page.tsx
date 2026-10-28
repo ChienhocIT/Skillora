@@ -43,10 +43,10 @@ export function PublicInstructorPage({ instructorId }: { instructorId: number })
                     width={128}
                     height={128}
                     priority
-                    className="h-32 w-32 rounded-[--radius-panel] border object-cover"
+                    className="h-32 w-32 rounded-[var(--radius-panel)] border object-cover"
                   />
                 ) : (
-                  <div className="flex h-32 w-32 items-center justify-center rounded-[--radius-panel] border bg-primary/10 text-primary">
+                  <div className="flex h-32 w-32 items-center justify-center rounded-[var(--radius-panel)] border bg-primary/10 text-primary">
                     <UserRound className="h-12 w-12" />
                   </div>
                 )}
@@ -102,8 +102,8 @@ export function PublicInstructorPage({ instructorId }: { instructorId: number })
                 </CardContent>
               </Card>
               <EmptyState
-                title="Courses by instructor"
-                message="Course filtering by instructor is not exposed by the backend yet. Browse the catalog to find published Skillora courses."
+                title="Keep exploring"
+                message="Discover more subjects and published courses in the Skillora catalog."
                 action={
                   <Button asChild>
                     <Link href="/">Browse catalog</Link>

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const baseUrl = "http://127.0.0.1:3000";
+const baseUrl = process.env.SKILLORA_E2E_BASE_URL ?? "http://127.0.0.1:3000";
 
 const pageResponse = {
   content: [
@@ -419,7 +419,7 @@ test.beforeEach(async ({ context }) => {
 test("catalog renders mocked published courses", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: /Skills for your future/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Skills for your next chapter/i })).toBeVisible();
   await expect(page.getByText("Spring Boot Production Course")).toBeVisible();
   await expect(page.getByText("Skillora Instructor")).toBeVisible();
   await expect(page.getByText("4.7")).toBeVisible();

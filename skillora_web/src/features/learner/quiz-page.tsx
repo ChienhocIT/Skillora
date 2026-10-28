@@ -69,7 +69,7 @@ export function QuizPage({ quizId }: { quizId: number }) {
               ) : null}
             </section>
             <aside>
-              <Card className="border border-border/60 rounded-[--radius-card]">
+              <Card className="border border-border/60 rounded-[var(--radius-card)]">
                 <CardHeader><CardTitle>Attempt History</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
                   {attempts.isLoading ? <PageSkeleton rows={2} /> : null}

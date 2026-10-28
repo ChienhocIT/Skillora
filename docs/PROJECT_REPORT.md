@@ -2,11 +2,15 @@
 
 ## Kết luận và phạm vi
 
+Cập nhật ngày 29/10/2026: branch bàn giao là `feature/marketplace-ui-20261029`, chứa cả bản Docker/P03/P04.1 chưa vào `main` và UI marketplace mới. Phạm vi, nguồn ảnh, kiểm chứng và cách chạy/rollback local được ghi tại [UI_REDESIGN.md](UI_REDESIGN.md). Gói offline release `ade2c0e` không chứa UI v2; cần xuất gói mới nếu muốn chuyển giao UI v2 sang máy khác. PR vào `main` là bước tích hợp mã nguồn, chưa đồng nghĩa hoàn thiện marketplace hoặc phát hành production.
+
 Skillora đã có một sản phẩm học trực tuyến với ba vai trò học viên, giảng viên và quản trị viên; hiện chạy được thành một stack Docker local gồm frontend, backend, MySQL, Redis, Nginx và Mailpit. Đây là bản đóng gói để bàn giao, phát triển và UAT local. Chưa có bằng chứng vận hành production, thu tiền thật hoặc nghiệm thu các nhà cung cấp bên ngoài.
 
 Mốc nguồn: branch `bugfix/release-readiness-20261028`; mã ứng dụng/Docker/Vercel Services đã commit và push ở `8052c35fe903908bcce6f480133497c7cd35396d`. Commit `78177e07813f6fa93200b26a395b912a2db909c9` sửa bài UAT để chạy lại với review đã tồn tại. Manifest của từng gói ghi HEAD, trạng thái working tree, image ID và SHA-256; các gói cũ mang baseline `825469b` là snapshot trước commit, không phải bản phát hành mới.
 
-Kiểm chứng hiện tại: Java 17 `verify` đạt 148 test, không skip; 9 proxy/OAuth test, 42 browser test giả lập và 9 UAT browser trên stack Docker local đạt. Backend cũng vượt readiness trên `PORT=8090` với MySQL/Redis. Gói xuất từ commit mới vẫn cần kiểm tra cold start độc lập trước khi thay gói cũ; kết quả nằm trong sidecar validation cạnh archive ở `artifacts/`.
+Kiểm chứng local đã ghi nhận: Java 17 `verify` đạt 148 test, không skip; UI v2 có 47 browser test giả lập, 9 proxy/OAuth test và 9 UAT browser với backend thật đạt. Frontend lint/typecheck/production build đạt. Backend cũng vượt readiness trên `PORT=8090` với MySQL/Redis. Gói Docker `ade2c0e` đã qua checksum/CRC, so sánh source và 9 UAT sau cold start từ image export với database mới, migration V1–V6. Bản UI v2 đang chạy tại http://localhost:18080 bằng image `skillora/web:ui-20261029`, nhãn `ui-working-tree-20261029`; image này được build trước commit UI, không được diễn giải nhãn thành commit SHA.
+
+Lighthouse local UI v2: Performance 99 desktop / 92 mobile, Accessibility 100, SEO 100, CLS 0. LCP mobile mô phỏng 3,36 giây vẫn cao hơn mục tiêu 2,5 giây. Best Practices 96 do phản hồi `401` dự kiến từ kiểm tra phiên khách. Đây là số liệu lab, không phải SLA hoặc số liệu người dùng production. [Bản kiểm chứng chia sẻ trong repo](UI_RELEASE_VALIDATION.md).
 
 Deploy Vercel chưa hoàn tất. Đích người dùng chọn là `chiendao278-7779`; phiên connector cũ nhận diện tài khoản khác và trả 403 khi truy cập team đích, sau đó connector bị ngắt khỏi phiên. CLI chưa có credentials. Cấu hình [Vercel Services](VERCEL_DEPLOYMENT.md) đã có trong repo; cần kết nối đúng tài khoản, kiểm tra quyền container runtime và cấu hình MySQL/Redis/SMTP production trước khi nghiệm thu live.
 
@@ -22,19 +26,19 @@ Chủ sản phẩm đã xác nhận ngày 28/10/2026: **marketplace khóa học 
 | Danh mục khóa học | Catalog, tìm kiếm/lọc, chi tiết khóa, chương/bài học, preview, thông tin giảng viên | Catalog/chi tiết qua gateway → Next proxy → API → DB đã được kiểm tra live |
 | Soạn và duyệt khóa | Giảng viên quản lý khóa của mình, chương/bài TEXT/VIDEO/QUIZ/ASSIGNMENT, tài nguyên; gửi duyệt, admin duyệt/từ chối | UAT đã tạo khóa mới có TEXT/QUIZ/ASSIGNMENT và duyệt PUBLISHED. Bunny VIDEO mới có mã tích hợp và kiểm thử giả lập, chưa nghiệm thu upload/transcode/playback thật |
 | Học tập | Ghi danh, dashboard, truy cập bài theo quyền, lưu tiến độ và lịch sử, mã chứng chỉ | Backend yêu cầu hoàn thành tất cả bài đã xuất bản, đỗ quiz và assignment được giảng viên đánh dấu Đạt. Không cho client tự hoàn thành bài đánh giá; có kiểm tra cạnh tranh cấp mã. PDF/tra cứu công khai/quy trình thu hồi quản trị và xử lý dữ liệu legacy còn mở |
-| Quiz | Cấu hình câu hỏi/lựa chọn, điểm, passScore, số lần làm; nộp/chấm/lịch sử | Backend có xử lý TEXT nhưng giao diện học viên mới gửi lựa chọn. Thời gian giới hạn chưa được server cưỡng chế bằng phiên làm bài/deadline |
-| Assignment | Nội dung/link bài nộp, nộp lại, trạng thái, giảng viên chấm và phản hồi; hạn/late flag | Không có kho upload file bài tập được quản lý; link bên ngoài không phải dịch vụ lưu trữ/scanning |
+| Quiz | Start/resume, deadline theo server, giới hạn lượt làm, câu hỏi lựa chọn và TEXT, chấm điểm/lịch sử | P03 đã hoàn tất local: không lộ đáp án trước khi làm, submit bắt buộc attemptId, chống nộp trùng/vượt lượt khi cạnh tranh; chưa có proctoring/chống gian lận toàn diện |
+| Assignment | Nội dung/link bài nộp, nộp lại, trạng thái, giảng viên chấm điểm, đánh dấu Đạt/Chưa đạt và phản hồi; hạn/late flag | Chứng chỉ xét quyết định Đạt, độc lập điểm số; trả bài/nộp lại xóa quyết định cũ. Chưa có kho upload file bài tập được quản lý; grade legacy cần giảng viên xác nhận lại |
 | Thương mại | Wishlist, giỏ hàng, coupon, checkout, order, hủy/thử lại, adapter VNPay/MoMo, enrollment sau thanh toán | Đã sửa sai hợp đồng wishlist/cart/coupon phát hiện bằng dữ liệu thật. Checkout local tạo đơn PENDING; payment tắt. Callback/settlement/cancel cạnh tranh được kiểm tra bằng giao dịch MySQL thật và gateway giả |
 | Tương tác | Review/rating/like, thông báo lưu DB và SSE reconnect | UI SSE nghe đúng named event và nội dung backend. SSE fanout hiện trong một instance; kiểm thử mock không chứng minh fanout nhiều replica |
 | AI trợ học | Hội thoại, lịch sử, ngữ cảnh khóa học/bài học và tích hợp Gemini | Local không gọi model. Không gọi đây là RAG đã nghiệm thu; chưa đánh giá chất lượng, quota/chi phí, streaming và khả năng chịu lỗi provider |
 | Quản trị | Người dùng/trạng thái, danh mục/khóa học/coupon, hàng đợi duyệt, thống kê, audit log | Các màn hình và một số bộ lọc được kiểm tra live; audit/statistics không thay thế sổ kế toán/đối soát tài chính |
-| Nền tảng vận hành | Java 17/Spring Boot, Next.js standalone, MySQL Flyway V1–V4, Redis, health/readiness, CI, Docker/TLS template | Hai image ứng dụng đã build và stack local đã chạy; CI remote/TLS domain/restore production chưa nghiệm thu |
+| Nền tảng vận hành | Java 17/Spring Boot, Next.js standalone, MySQL Flyway V1–V6, Redis, health/readiness, CI, Docker/TLS/Vercel Services template | Stack Docker 6 dịch vụ và gói offline đã kiểm chứng local; UI v2 có image riêng. CI của PR phải được kiểm tra riêng; TLS domain/restore production/Vercel chưa nghiệm thu |
 
 ## Những tính năng nghiệp vụ còn thiếu hoặc mới hoàn thành một phần
 
 | Mã | Khoảng trống và ảnh hưởng | Tiêu chí để xem là hoàn thành |
 |---|---|---|
-| B01 | Đã chốt marketplace trả phí nhiều giảng viên; còn cần chốt chính sách hoàn thành/chứng chỉ, hoàn tiền, hoa hồng/kỳ chốt/payout, kiểm duyệt giảng viên | Chủ sản phẩm duyệt chính sách, ma trận quyền và các tình huống nghiệp vụ trong phạm vi đã xác nhận |
+| B01 | Đã chốt marketplace trả phí nhiều giảng viên và điều kiện hoàn thành bài + đỗ quiz + giảng viên đánh dấu assignment Đạt; còn chính sách hoàn tiền, hoa hồng/kỳ chốt/payout, kiểm duyệt giảng viên và xử lý đổi giáo trình | Chủ sản phẩm duyệt các chính sách còn mở, ma trận quyền và tình huống nghiệp vụ trước khi mở bán công khai |
 | B02 | Chưa có xác minh email/luồng xét duyệt tư cách giảng viên hoàn chỉnh; tự đăng ký giảng viên chưa tương đương được xác minh | Với marketplace công khai: xác minh email, trạng thái/tiêu chí duyệt, quyền trước/sau duyệt và chống lạm dụng được nghiệm thu |
 | B03 | Đã triển khai P03: start/resume/deadline trên server, giới hạn lượt làm đồng thời, TEXT UI và giữ kín đáp án trước khi làm | Gate backend/MySQL/browser/Docker được mô tả tại [IMPLEMENTATION_P03_P04](IMPLEMENTATION_P03_P04.md); chưa bao gồm proctoring/chống gian lận toàn diện |
 | B04 | Đã có cổng chứng chỉ: tất cả bài xuất bản hoàn thành, quiz đỗ và assignment được giảng viên đánh dấu Đạt | Còn PDF, tra cứu mã công khai, quy trình quản trị thu hồi và recompute dữ liệu legacy; grade cũ thiếu quyết định cần giảng viên xác nhận lại |
@@ -51,6 +55,6 @@ Nguồn chính để đối chiếu: [WishlistService](../skillora_platform/src/
 
 ## Mức kiểm chứng và việc chưa được chứng minh
 
-Kết quả chạy và hướng dẫn gói được ghi trong [DOCKER_PACKAGE.md](DOCKER_PACKAGE.md); không suy ra “đã hoàn thiện nghiệp vụ” từ healthcheck hoặc số test. UAT live tạo dữ liệu trong DB local; một số hành động bài học/quiz/review phụ thuộc trạng thái seed và số lần làm đã có, nên không xem tám scenario là toàn bộ ma trận nghiệm thu sản phẩm.
+Kết quả chạy và hướng dẫn gói được ghi trong [DOCKER_PACKAGE.md](DOCKER_PACKAGE.md) và [UI_RELEASE_VALIDATION.md](UI_RELEASE_VALIDATION.md); không suy ra “đã hoàn thiện nghiệp vụ” từ healthcheck hoặc số test. UAT live tạo dữ liệu trong DB local; một số hành động bài học/quiz/review phụ thuộc trạng thái seed và số lần làm đã có, nên không xem chín scenario là toàn bộ ma trận nghiệm thu sản phẩm.
 
 Không sử dụng khóa Gemini/payment/Bunny/Google thật. Chưa triển khai VPS/staging/production, chưa nghiệm thu thanh toán có tiền, email reset production, video thật, Google login thật, nội dung trả lời AI, restore backup hay tải đồng thời thực tế. Các stack Docker có trước được giữ nguyên. Gói không chứa DB hoặc `.env.docker.local`.

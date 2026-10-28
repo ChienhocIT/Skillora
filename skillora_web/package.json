@@ -13,7 +13,7 @@
     "test:contract:no-mock-src": "node scripts/check-no-src-mock.mjs",
     "test:e2e": "node scripts/run-playwright.mjs",
     "test:e2e:smoke": "node scripts/run-playwright.mjs tests/e2e/smoke.spec.ts",
-    "test:e2e:mock": "node scripts/run-playwright.mjs tests/e2e/smoke.spec.ts tests/e2e/skillora-v1.spec.ts --workers=1",
+    "test:e2e:mock": "node scripts/run-playwright.mjs tests/e2e/smoke.spec.ts tests/e2e/skillora-v1.spec.ts tests/e2e/marketplace-redesign.spec.ts --workers=1",
     "test:e2e:live": "node scripts/run-playwright.mjs tests/e2e/live-backend.spec.ts --workers=1",
     "test:e2e:live:local": "node scripts/run-live-local-e2e.mjs"
   },

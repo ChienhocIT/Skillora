@@ -1,6 +1,6 @@
 # Đợt triển khai P03 và P04.1 — 28/10/2026
 
-Branch `bugfix/release-readiness-20261028`, baseline HEAD `825469b44ac88852dcdd807a1ec5f87047f20295`, thay đổi chưa commit/push. Đợt này tiếp nối bản Docker marketplace v2; không coi các gói cũ là source/image mới.
+Ghi chép triển khai ban đầu trên branch `bugfix/release-readiness-20261028`, baseline `825469b44ac88852dcdd807a1ec5f87047f20295`. Các thay đổi sau đó đã commit/push trong `8052c35` và các commit sửa test/tài liệu; hiện được đưa cùng UI v2 vào branch `feature/marketplace-ui-20261029` để mở PR vào `main`. Image và archive bên dưới là mốc lịch sử của đợt P03/P04.1; [báo cáo hiện tại](PROJECT_REPORT.md) và [kiểm chứng bàn giao](UI_RELEASE_VALIDATION.md) ghi trạng thái mới hơn.
 
 ## Quyết định nghiệp vụ đã xác nhận
 
@@ -43,20 +43,20 @@ Branch `bugfix/release-readiness-20261028`, baseline HEAD `825469b44ac88852dcdd8
 
 ## Gate kiểm chứng
 
-Các gate cuối đợt đang được chạy; kết quả dưới đây sẽ được cập nhật từ log/report thực tế trước bàn giao:
+Kết quả đã ghi nhận trong đợt release và UI tiếp nối:
 
 | Gate | Trạng thái |
 |---|---|
 | H2/MySQL P03 | 22/22 pass ở lượt targeted trước P04; concurrency/deadline/ownership/TEXT |
 | H2 P04/quiz/enrollment | 25/25 pass trước khi thêm các case policy cuối |
 | Assignment policy H2/MySQL | 18/18 pass, gồm grade legacy/chấm lại và cấp chứng chỉ đồng thời |
-| Full Java 17 verify + JaCoCo | Đang chạy |
-| Lint/typecheck/build | Lint/typecheck pass; production Docker build đang hoàn tất |
+| Full Java 17 verify + JaCoCo | 148 test đạt, 0 failure/error/skip; coverage gate đạt |
+| Lint/typecheck/build | Đạt; image UI v2 production đã build/chạy local |
 | Proxy/OAuth / no-mock contract | 9/9 pass; contract pass, không có sửa đổi auth trong đợt này |
-| Browser mock | Đang chạy lại trên image cuối; đã sửa payload TEXT sau khi reload và selector timer |
-| Browser live | P03 9/9 pass; đang xác minh scenario kết hợp P03 + P04.1 trên image cuối |
-| OCR review | Đang đối chiếu diff/rules và coverage; các patch cũ không đổi sẽ ghi lý do skip riêng |
+| Browser mock | 47/47 trên UI v2, gồm 5 regression redesign |
+| Browser live | 9/9 scenario kết hợp P03/P04.1 trên image UI v2; gói offline ade2c0e cũng có 9/9 cold-start UAT |
+| OCR review | Checklist trong docs/reviews; review baseline còn 71 file hoãn, không coi các gate này là full review |
 
-G?i b?n giao m?i d?ng t?n `skillora-marketplace-p03-p04-20261028`; ki?m ch?ng archive/offline cold start ???c ghi v?o sidecar validation trong artifacts sau export, kh?ng thay ??i source/image ?? ??ng g?i.
+Gói P03/P04.1 ban đầu đã được thay bằng `skillora-release-ade2c0e3a4f0`; kiểm chứng archive và cold start được ghi vào sidecar trong artifacts. Gói này không chứa UI v2; không diễn giải archive cũ thành bản source/image hiện tại.
 
 Log local: `%TEMP%/skillora-p03-*.log`, `%TEMP%/skillora-p04-*.log`, `%TEMP%/skillora-p03-p04-*.log`; Surefire/JaCoCo ở `skillora_platform/target`. Snapshot trước đợt và OCR ở `%TEMP%/skillora-p03-20261028/`. Không dùng số test để suy ra nghiệm thu production hay toàn bộ nghiệp vụ marketplace.

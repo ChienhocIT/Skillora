@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { CourseThumbnail } from "@/components/course-thumbnail";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Award,
@@ -122,7 +122,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
       <MarketplaceLayout>
         <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-6">
           <div className="space-y-4">
-            <Skeleton className="h-48 w-full rounded-[--radius-card]" />
+            <Skeleton className="h-48 w-full rounded-[var(--radius-card)]" />
             <Skeleton className="h-8 w-2/3" />
             <Skeleton className="h-4 w-1/2" />
           </div>
@@ -155,65 +155,62 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
 
   return (
     <MarketplaceLayout>
-      {/* Hero banner - Premium luxury mesh */}
-      <section className="hero-gradient text-white relative overflow-hidden">
-        {/* Background visual mesh grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)]" />
-        
-        <div className="mx-auto max-w-[1400px] px-4 py-10 md:px-6 md:py-16 relative z-10">
-          <div className="max-w-4xl space-y-6">
+      <section className="course-intro border-b">
+        <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-6 lg:px-10 md:py-10">
+          <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted-foreground"><Link href="/" className="font-semibold text-primary hover:underline">All courses</Link> / {course.categories?.[0]?.name ?? "Course details"}</nav>
+          <div className="max-w-3xl space-y-5">
             <div className="flex flex-wrap gap-2">
               {course.level ? (
-                <Badge variant="secondary" className="bg-white/10 hover:bg-white/15 text-teal-200 border-0 font-semibold px-2.5 py-0.5 text-xs">
+                <Badge variant="secondary" className="bg-accent text-primary border-0 font-semibold px-2.5 py-0.5 text-sm">
                   {course.level.replace("_", " ")}
                 </Badge>
               ) : null}
               {course.categories?.map((cat) => (
-                <Badge key={cat.id} variant="secondary" className="bg-white/10 hover:bg-white/15 text-white border-0 font-semibold px-2.5 py-0.5 text-xs">
+                <Badge key={cat.id} variant="secondary" className="bg-background text-foreground border-0 font-semibold px-2.5 py-0.5 text-sm">
                   {cat.name}
                 </Badge>
               ))}
             </div>
             
-            <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl leading-[1.1] text-balance">
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl leading-[1.1] text-balance">
               {course.title}
             </h1>
             
             {course.subtitle ? (
-              <p className="text-base text-white/80 md:text-xl max-w-3xl leading-relaxed font-medium">
+              <p className="text-base text-muted-foreground md:text-lg max-w-3xl leading-relaxed font-medium">
                 {course.subtitle}
               </p>
             ) : null}
             
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/70">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <StarRating rating={course.avgRating} count={course.totalReviews} />
               
               <span className="flex items-center gap-1.5">
-                <Users className="h-4 w-4 text-teal-400" />
-                <span className="font-semibold text-white">{(course.totalEnrollments ?? 0).toLocaleString()}</span> students
+                <Users className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-foreground">{(course.totalEnrollments ?? 0).toLocaleString()}</span> students
               </span>
               
               <span className="flex items-center gap-1.5">
-                <BookOpen className="h-4 w-4 text-teal-400" />
-                <span className="font-semibold text-white">{totalLessons}</span> lessons
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-foreground">{totalLessons}</span> lessons
               </span>
               
               <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4 text-teal-400" />
-                <span className="font-semibold text-white">{formatDuration(course.totalDurationSeconds)}</span>
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-foreground">{formatDuration(course.totalDurationSeconds)}</span>
               </span>
             </div>
             
-            <div className="flex flex-wrap items-center gap-4 text-xs text-white/60 pt-1">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-1">
               {course.instructorName ? (
                 <p>
                   Created by{" "}
                   {course.instructorId ? (
-                    <Link href={`/instructors/${course.instructorId}`} className="underline text-teal-300 font-semibold hover:text-teal-200">
+                    <Link href={`/instructors/${course.instructorId}`} className="underline text-primary font-semibold hover:text-primary">
                       {course.instructorName}
                     </Link>
                   ) : (
-                    <span className="underline text-teal-300 font-semibold">{course.instructorName}</span>
+                    <span className="underline text-primary font-semibold">{course.instructorName}</span>
                   )}
                 </p>
               ) : null}
@@ -233,39 +230,26 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
       </section>
 
       <div className="mx-auto max-w-[1400px] px-4 pt-6 md:px-6 xl:hidden">
-        <div className="course-card relative aspect-video overflow-hidden rounded-[--radius-card] border border-border/70 bg-muted shadow-[0_16px_55px_-42px_rgba(15,23,42,0.75)]">
-          {course.thumbnailUrl ? (
-            <Image
-              src={course.thumbnailUrl}
-              alt={course.title}
-              fill
-              priority
-              sizes="(min-width: 768px) 720px, 100vw"
-              className="course-card-image object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <BookOpen className="h-10 w-10" />
-            </div>
-          )}
+        <div className="course-card relative aspect-video overflow-hidden rounded-[var(--radius-card)] border border-border/70 bg-muted shadow-[0_16px_55px_-42px_rgba(15,23,42,0.75)]">
+          <CourseThumbnail src={course.thumbnailUrl} title={course.title} priority sizes="(min-width: 1280px) 380px, 100vw" className="course-card-image object-cover" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/35 to-transparent" />
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1400px] px-4 py-8 pb-28 md:px-6 xl:pb-8">
-        <div className="grid gap-8 xl:grid-cols-[1fr_380px]">
+      <div className="mx-auto max-w-[1400px] px-4 py-8 pb-28 md:px-6 lg:px-10 xl:pb-8">
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
           {/* Main content */}
-          <section className="space-y-8">
+          <section className="min-w-0 space-y-8">
             {/* Learning outcomes */}
             {course.outcomes?.length ? (
-              <Card className="rounded-[--radius-card] border-border/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
+              <Card className="rounded-[var(--radius-card)] border-border/60 shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-bold">What you will learn</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="grid gap-3 sm:grid-cols-2">
+                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {course.outcomes.map((item) => (
-                      <li key={item} className="flex gap-2.5 text-xs text-muted-foreground leading-relaxed">
+                      <li key={item} className="flex gap-2.5 text-sm text-muted-foreground leading-relaxed">
                         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                         <span>{item}</span>
                       </li>
@@ -276,11 +260,11 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
             ) : null}
 
             {/* Curriculum */}
-            <Card className="rounded-[--radius-card] border-border/60">
+            <Card className="rounded-[var(--radius-card)] border-border/60">
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <CardTitle className="text-lg font-bold">Course content</CardTitle>
-                  <span className="text-xs font-semibold text-muted-foreground/80">
+                  <span className="text-sm font-semibold text-muted-foreground">
                     {sections.length} section{sections.length !== 1 ? "s" : ""} &bull; {totalLessons} lesson{totalLessons !== 1 ? "s" : ""}
                   </span>
                 </div>
@@ -308,25 +292,25 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
             </Card>
 
             {/* About */}
-            <Card className="rounded-[--radius-card] border-border/60">
+            <Card className="rounded-[var(--radius-card)] border-border/60">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-bold">About this course</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-xs leading-relaxed text-muted-foreground">
+              <CardContent className="space-y-4 text-sm leading-relaxed text-muted-foreground">
                 <p className="whitespace-pre-line">{course.description ?? "No description has been added yet."}</p>
               </CardContent>
             </Card>
 
             {/* Requirements */}
             {course.requirements?.length ? (
-              <Card className="rounded-[--radius-card] border-border/60">
+              <Card className="rounded-[var(--radius-card)] border-border/60">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-bold">Requirements</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="grid gap-2.5">
                     {course.requirements.map((item) => (
-                      <li key={item} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
+                      <li key={item} className="flex gap-2 text-sm text-muted-foreground leading-relaxed">
                         <span className="text-foreground/60 font-bold">&bull;</span>
                         {item}
                       </li>
@@ -337,9 +321,9 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
             ) : null}
 
             {/* Reviews */}
-            <Card className="rounded-[--radius-card] border-border/60">
+            <Card className="rounded-[var(--radius-card)] border-border/60">
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <CardTitle className="text-lg font-bold">Student reviews</CardTitle>
                   {course.avgRating ? (
                     <div className="flex items-center gap-2.5">
@@ -367,11 +351,11 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="text-sm font-bold">Share your learning experience</p>
-                          <p className="text-xs text-muted-foreground/80 mt-0.5">
+                          <p className="text-sm text-muted-foreground mt-0.5">
                             Your review helps other learners choose the right course.
                           </p>
                         </div>
-                        <Button size="sm" className="font-semibold text-xs h-9" onClick={() => setShowReviewForm(true)}>
+                        <Button size="sm" className="font-semibold text-sm h-9" onClick={() => setShowReviewForm(true)}>
                           Write a review
                         </Button>
                       </div>
@@ -380,7 +364,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                 ) : null}
 
                 {reviews.content.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No reviews yet.</p>
+                  <p className="text-sm text-muted-foreground">No reviews yet.</p>
                 ) : null}
                 
                 {reviews.content.map((review) => (
@@ -388,19 +372,19 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                     key={review.id}
                     className="border-b border-border/40 pb-4 last:border-b-0 last:pb-0 pt-2"
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                           {(review.userName ?? "L")[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-foreground">{review.userName ?? "Learner"}</p>
+                          <p className="text-sm font-bold text-foreground">{review.userName ?? "Learner"}</p>
                           <StarRating rating={review.rating} />
                         </div>
                       </div>
                     </div>
                     {review.content ? (
-                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{review.content}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{review.content}</p>
                     ) : null}
                     {user ? (
                       <Button
@@ -419,15 +403,15 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                 ))}
                 
                 {reviews.totalPages > 1 ? (
-                  <div className="flex items-center justify-between gap-3 pt-4 border-t border-border/40">
-                    <p className="text-xs font-semibold text-muted-foreground">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border/40">
+                    <p className="text-sm font-semibold text-muted-foreground">
                       Page {reviews.page + 1} of {reviews.totalPages}
                     </p>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-xs h-8"
+                        className="text-sm h-8"
                         disabled={reviews.first}
                         onClick={() => setReviewPage((value) => Math.max(0, value - 1))}
                       >
@@ -436,7 +420,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-xs h-8"
+                        className="text-sm h-8"
                         disabled={reviews.last}
                         onClick={() => setReviewPage((value) => value + 1)}
                       >
@@ -449,25 +433,12 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
             </Card>
           </section>
 
-          {/* Sticky purchase card (desktop) - Glass card */}
-          <aside className="hidden xl:block">
+          {/* Sticky purchase card (desktop) */}
+          <aside className="relative hidden xl:-mt-60 xl:block">
             <div className="sticky-purchase space-y-4">
-              <Card className="course-card overflow-hidden rounded-[--radius-card] border border-border/70 bg-card/90 py-0 shadow-2xl backdrop-blur-md">
+              <Card className="course-card overflow-hidden rounded-[var(--radius-card)] border border-border/70 bg-card py-0 shadow-lg">
                 <div className="relative aspect-video bg-muted border-b border-border/40">
-                  {course.thumbnailUrl ? (
-                    <Image
-                      src={course.thumbnailUrl}
-                      alt={course.title}
-                      fill
-                      priority
-                      sizes="380px"
-                      className="course-card-image object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      <BookOpen className="h-8 w-8" />
-                    </div>
-                  )}
+                  <CourseThumbnail src={course.thumbnailUrl} title={course.title} priority sizes="(min-width: 1280px) 380px, 100vw" className="course-card-image object-cover" />
                 </div>
                 <CardContent className="space-y-4 p-6">
                   <div className="flex items-baseline gap-3">
@@ -475,7 +446,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                       {formatMoney(price, course.currency)}
                     </span>
                     {course.discountPrice ? (
-                      <span className="text-sm text-muted-foreground/60 line-through font-medium">
+                      <span className="text-sm text-muted-foreground line-through font-medium">
                         {formatMoney(course.price, course.currency)}
                       </span>
                     ) : null}
@@ -483,7 +454,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
 
                   <div className="grid gap-2 pt-2">
                     {myEnrollment ? (
-                      <Button asChild className="w-full h-11 text-xs font-bold rounded-[--radius-button]" size="lg">
+                      <Button asChild className="w-full h-11 text-sm font-bold rounded-[var(--radius-button)]" size="lg">
                         <Link href={`/learn/${myEnrollment.id}`}>
                           <Play className="mr-2 h-4 w-4 fill-current" />
                           Go to course
@@ -493,7 +464,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                       <>
                         {isFree ? (
                           <Button
-                            className="w-full h-11 text-xs font-bold rounded-[--radius-button]"
+                            className="w-full h-11 text-sm font-bold rounded-[var(--radius-button)]"
                             size="lg"
                             onClick={() => enrollFree.mutate()}
                             disabled={enrollFree.isPending}
@@ -502,7 +473,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                           </Button>
                         ) : (
                           <Button
-                            className="w-full h-11 text-xs font-bold rounded-[--radius-button]"
+                            className="w-full h-11 text-sm font-bold rounded-[var(--radius-button)]"
                             size="lg"
                             onClick={() => addCart.mutate()}
                             disabled={addCart.isPending}
@@ -512,7 +483,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                           </Button>
                         )}
                         <Button
-                          className="w-full h-11 text-xs font-bold rounded-[--radius-button] border-border/80 text-foreground hover:bg-muted"
+                          className="w-full h-11 text-sm font-bold rounded-[var(--radius-button)] border-border/80 text-foreground hover:bg-muted"
                           variant="outline"
                           onClick={() => addWishlist.mutate()}
                           disabled={addWishlist.isPending}
@@ -522,7 +493,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                         </Button>
                       </>
                     ) : (
-                      <Button asChild className="w-full h-11 text-xs font-bold rounded-[--radius-button]" size="lg">
+                      <Button asChild className="w-full h-11 text-sm font-bold rounded-[var(--radius-button)]" size="lg">
                         <Link href={`/login?next=/courses/${idOrSlug}`}>
                           Sign in to enroll
                         </Link>
@@ -531,7 +502,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
 
                     {user ? (
                       <AskAiButton
-                        className="w-full h-11 text-xs font-bold rounded-[--radius-button] border-primary/20 hover:bg-primary/5 text-primary"
+                        className="w-full h-11 text-sm font-bold rounded-[var(--radius-button)] border-primary/20 hover:bg-primary/5 text-primary"
                         courseId={course.id}
                         label="Ask AI about this course"
                         prompt={`Help me understand whether "${course.title}" fits my goals. Summarize the learning path, prerequisites, and first steps.`}
@@ -543,11 +514,11 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
 
                   <Separator className="bg-border/50" />
 
-                  <div className="space-y-3.5 text-xs text-muted-foreground pt-1">
+                  <div className="space-y-3.5 text-sm text-muted-foreground pt-1">
                     <h4 className="font-bold text-foreground">This course includes:</h4>
                     <div className="flex items-center gap-2.5">
                       <Clock className="h-4 w-4 text-primary shrink-0" />
-                      <span>{formatDuration(course.totalDurationSeconds)} of video content</span>
+                      <span>{formatDuration(course.totalDurationSeconds)} of course content</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <BookOpen className="h-4 w-4 text-primary shrink-0" />
@@ -555,7 +526,7 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
                     </div>
                     <div className="flex items-center gap-2.5">
                       <Infinity className="h-4 w-4 text-primary shrink-0" />
-                      <span>Full lifetime access</span>
+                      <span>Learn at your own pace</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <Award className="h-4 w-4 text-primary shrink-0" />
@@ -572,30 +543,30 @@ export function CourseDetailPage({ idOrSlug }: { idOrSlug: string }) {
       {/* Mobile bottom purchase bar */}
       {!myEnrollment ? (
         <div className="mobile-purchase-bar xl:hidden border-t border-border/70 bg-background/95 backdrop-blur-md shadow-2xl">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <span className="text-lg font-extrabold text-foreground">
                 {formatMoney(price, course.currency)}
               </span>
               {course.discountPrice ? (
-                <span className="ml-2 text-xs text-muted-foreground/60 line-through font-medium">
+                <span className="ml-2 text-sm text-muted-foreground line-through font-medium">
                   {formatMoney(course.price, course.currency)}
                 </span>
               ) : null}
             </div>
             {isStudent ? (
               isFree ? (
-                <Button className="font-bold text-xs h-9 rounded-[--radius-button]" onClick={() => enrollFree.mutate()} disabled={enrollFree.isPending}>
+                <Button className="font-bold text-sm h-11 rounded-[var(--radius-button)]" onClick={() => enrollFree.mutate()} disabled={enrollFree.isPending}>
                   Enroll free
                 </Button>
               ) : (
-                <Button className="font-bold text-xs h-9 rounded-[--radius-button]" onClick={() => addCart.mutate()} disabled={addCart.isPending}>
+                <Button className="font-bold text-sm h-11 rounded-[var(--radius-button)]" onClick={() => addCart.mutate()} disabled={addCart.isPending}>
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   Add to cart
                 </Button>
               )
             ) : (
-              <Button asChild className="font-bold text-xs h-9 rounded-[--radius-button]">
+              <Button asChild className="font-bold text-sm h-11 rounded-[var(--radius-button)]">
                 <Link href={`/login?next=/courses/${idOrSlug}`}>Sign in</Link>
               </Button>
             )}
@@ -623,35 +594,35 @@ function CurriculumSection({
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-muted/30 transition-all [&[data-state=open]>svg]:rotate-180">
         <div>
           <p className="font-bold text-sm text-foreground">{section.title}</p>
-          <p className="text-xs text-muted-foreground/80 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {lessons.length} lesson{lessons.length !== 1 ? "s" : ""} &bull; {formatDuration(duration)}
           </p>
         </div>
-        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground/80 transition-transform duration-300" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300" />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="border-t border-border/40 divide-y divide-border/20 bg-background/25">
           {lessons.map((lesson) => (
             <div
               key={lesson.id}
-              className="flex items-center justify-between gap-3 px-4 py-3 text-xs hover:bg-muted/20 transition-all"
+              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/20 transition-all"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 {lesson.preview ? (
                   <Play className="h-3.5 w-3.5 shrink-0 text-primary fill-primary/10" />
                 ) : (
-                  <BookOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                  <BookOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 )}
                 <span className="truncate text-muted-foreground font-medium">{lesson.title}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {lesson.preview ? (
-                  <Button asChild size="sm" variant="link" className="h-auto p-0 text-primary font-bold text-xs">
+                  <Button asChild size="sm" variant="link" className="h-auto p-0 text-primary font-bold text-sm">
                     <Link href={`/lessons/${lesson.id}`}>Preview</Link>
                   </Button>
                 ) : null}
                 {isEnrolled && enrollmentId ? (
-                  <Button asChild size="sm" variant="link" className="h-auto p-0 font-bold text-xs text-primary">
+                  <Button asChild size="sm" variant="link" className="h-auto p-0 font-bold text-sm text-primary">
                     <Link href={`/learn/${enrollmentId}/lessons/${lesson.id}`}>Open</Link>
                   </Button>
                 ) : null}

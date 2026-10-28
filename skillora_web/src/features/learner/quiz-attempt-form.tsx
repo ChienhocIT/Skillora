@@ -74,7 +74,7 @@ export function QuizAttemptForm({ quiz, attempt, onFinish }: {
       {questions.map((question, index) => {
         const result = attempt.answers?.find((answer) => answer.questionId === question.id);
         return (
-          <Card key={question.id} className="border border-border/60 rounded-[--radius-card]">
+          <Card key={question.id} className="border border-border/60 rounded-[var(--radius-card)]">
             <CardHeader><CardTitle className="text-sm">Question {index + 1}: {question.content ?? question.text}</CardTitle></CardHeader>
             <CardContent className="grid gap-2">
               {question.type === "TEXT" ? (
@@ -85,7 +85,7 @@ export function QuizAttemptForm({ quiz, attempt, onFinish }: {
                     onChange={(event) => change(question.id, { textAnswer: event.target.value })} />
                 </>
               ) : (question.answerOptions ?? question.options ?? []).map((option) => (
-                <label key={option.id} className="flex min-h-11 items-center gap-3 rounded-[--radius-input] border border-border/60 p-3 text-xs">
+                <label key={option.id} className="flex min-h-11 items-center gap-3 rounded-[var(--radius-input)] border border-border/60 p-3 text-xs">
                   <Checkbox checked={draft[question.id]?.selectedOptionIds?.includes(option.id) ?? false}
                     disabled={submitted || submit.isPending} onCheckedChange={(checked) => {
                       const previous = draft[question.id]?.selectedOptionIds ?? [];

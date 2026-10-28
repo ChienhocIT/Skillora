@@ -14,7 +14,7 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon"
-      aria-label={`Switch to ${nextTheme} mode`}
+      aria-label="Toggle color theme"
       onClick={() => setTheme(nextTheme)}
     >
       <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />

@@ -4,17 +4,35 @@ import * as React from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 
 import { CourseCard } from "@/components/course-card";
 import { MarketplaceLayout } from "@/components/marketplace-layout";
 import { EmptyState, ErrorState } from "@/components/data-state";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { courseApi, emptyPage } from "@/lib/api";
 import { PAGE_SIZE } from "@/lib/config";
@@ -68,28 +86,42 @@ function FilterPanel({
   setSort: (value: string) => void;
   categories: Category[];
 }) {
+  const filterId = React.useId();
   return (
     <div className="grid gap-5">
       <div className="grid gap-2">
-        <Label htmlFor="filter-search" className="text-xs font-bold text-foreground">Search keywords</Label>
+        <Label
+          htmlFor={`${filterId}-search`}
+          className="text-sm font-bold text-foreground"
+        >
+          Search keywords
+        </Label>
         <div className="relative group/input">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within/input:text-primary transition-colors" />
           <Input
-            id="filter-search"
+            id={`${filterId}-search`}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search keywords..."
-            className="h-10 pl-9 text-xs"
+            className="h-11 pl-9 text-sm"
           />
         </div>
       </div>
       <div className="grid gap-2">
-        <Label className="text-xs font-bold text-foreground">Course Level</Label>
+        <Label htmlFor={`${filterId}-level`} className="text-sm font-bold text-foreground">
+          Course Level
+        </Label>
         <Select value={level} onValueChange={setLevel}>
-          <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger id={`${filterId}-level`} className="min-h-11 w-full text-sm">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             {levels.map((item) => (
-              <SelectItem key={item.value} value={item.value} className="text-xs">
+              <SelectItem
+                key={item.value}
+                value={item.value}
+                className="text-sm"
+              >
                 {item.label}
               </SelectItem>
             ))}
@@ -97,13 +129,21 @@ function FilterPanel({
         </Select>
       </div>
       <div className="grid gap-2">
-        <Label className="text-xs font-bold text-foreground">Category</Label>
+        <Label htmlFor={`${filterId}-category`} className="text-sm font-bold text-foreground">Category</Label>
         <Select value={categoryId} onValueChange={setCategoryId}>
-          <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger id={`${filterId}-category`} className="min-h-11 w-full text-sm">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL" className="text-xs">All categories</SelectItem>
+            <SelectItem value="ALL" className="text-sm">
+              All categories
+            </SelectItem>
             {categories.map((category) => (
-              <SelectItem key={category.id} value={String(category.id)} className="text-xs">
+              <SelectItem
+                key={category.id}
+                value={String(category.id)}
+                className="text-sm"
+              >
                 {category.name}
               </SelectItem>
             ))}
@@ -111,12 +151,18 @@ function FilterPanel({
         </Select>
       </div>
       <div className="grid gap-2">
-        <Label className="text-xs font-bold text-foreground">Sort order</Label>
+        <Label htmlFor={`${filterId}-sort`} className="text-sm font-bold text-foreground">Sort order</Label>
         <Select value={sort} onValueChange={setSort}>
-          <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger id={`${filterId}-sort`} className="min-h-11 w-full text-sm">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             {sortOptions.map((item) => (
-              <SelectItem key={item.value} value={item.value} className="text-xs">
+              <SelectItem
+                key={item.value}
+                value={item.value}
+                className="text-sm"
+              >
                 {item.label}
               </SelectItem>
             ))}
@@ -127,59 +173,40 @@ function FilterPanel({
   );
 }
 
-function HeroSection({ onSearch }: { onSearch: (value: string) => void }) {
-  const [value, setValue] = React.useState("");
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    onSearch(value);
-  };
-
+function HeroSection() {
   return (
-    <section className="hero-gradient relative overflow-hidden text-white">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:3.25rem_3.25rem] [mask-image:radial-gradient(ellipse_68%_58%_at_50%_0%,#000_68%,transparent_100%)]" />
-
-      <div className="relative z-10 mx-auto max-w-[1400px] px-4 py-12 md:px-6 md:py-[4.5rem] lg:py-20">
-        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_460px] xl:grid-cols-[minmax(0,1fr)_520px]">
-          <div className="space-y-6 text-center lg:text-left">
-            <Badge className="border border-white/14 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-white/15">
-              Skillora marketplace
-            </Badge>
-            <h1 className="max-w-[11ch] text-4xl font-black leading-[0.98] tracking-[-0.055em] text-balance md:text-6xl lg:text-7xl">
-              Skills for your future
-            </h1>
-            <p className="mx-auto max-w-[48ch] text-base leading-7 text-white/78 md:text-lg lg:mx-0">
-              Find production-ready courses, practice with structure, and keep every learning path moving.
-            </p>
-            <form onSubmit={handleSubmit} className="mx-auto flex max-w-2xl flex-col gap-2 rounded-[--radius-card] border border-white/15 bg-white/10 p-2 shadow-2xl backdrop-blur sm:flex-row lg:mx-0">
-              <div className="group/search relative flex-1">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-primary" />
-                <Input
-                  value={value}
-                  onChange={(event) => setValue(event.target.value)}
-                  placeholder="What do you want to learn today?"
-                  className="h-12 rounded-[calc(var(--radius-card)-0.25rem)] border-0 bg-white pl-11 text-foreground shadow-none focus-visible:ring-2 focus-visible:ring-teal-300/70"
-                />
-              </div>
-              <Button type="submit" size="lg" className="h-12 rounded-[calc(var(--radius-card)-0.25rem)] border-none bg-teal-300 px-7 font-bold text-teal-950 shadow-none transition-colors duration-200 hover:bg-teal-200 sm:w-auto">
-                Search
-              </Button>
-            </form>
-          </div>
-
-          <div className="course-card relative hidden aspect-[4/3] w-full overflow-hidden rounded-[--radius-panel] border border-white/16 bg-white/8 p-2 shadow-2xl backdrop-blur-md lg:block">
-            <div className="relative h-full overflow-hidden rounded-[calc(var(--radius-panel)-0.5rem)]">
-              <Image
-                src="/hero.png"
-                alt="Skillora online learning lifestyle illustration"
-                fill
-                priority
-                sizes="(min-width: 1280px) 520px, (min-width: 1024px) 460px, 100vw"
-                className="course-card-image object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-white/5" />
-            </div>
-          </div>
+    <section
+      className="mx-auto max-w-[1400px] px-4 pt-6 md:px-6 lg:px-10"
+      aria-label="Discover Skillora"
+    >
+      <div className="catalog-hero grid overflow-hidden rounded-xl md:grid-cols-2">
+        <div className="flex flex-col items-start justify-center px-6 py-8 md:px-10 lg:px-12">
+          <p className="mb-4 text-sm font-semibold text-primary">
+            A little learning. A lot of possibility.
+          </p>
+          <h1 className="max-w-[15ch] text-[2.25rem] font-bold leading-[1.1] tracking-tight lg:text-5xl">
+            Skills for your next chapter.
+          </h1>
+          <p className="mt-5 max-w-[36ch] text-base leading-7 text-muted-foreground">
+            Learn something new, put it into practice, and make your next move
+            with confidence.
+          </p>
+          <Button asChild size="lg" className="mt-7 h-12 px-6">
+            <a href="#courses">
+              Explore courses <ArrowRight aria-hidden="true" />
+            </a>
+          </Button>
+        </div>
+        <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[380px]">
+          <Image
+            src="/images/learning-hero-v2.png"
+            alt="A learner working with a laptop and notebook"
+            fill
+            priority
+            fetchPriority="high"
+            sizes="(min-width: 1400px) 660px, (min-width: 768px) 50vw, 100vw"
+            className="object-cover object-[65%_center]"
+          />
         </div>
       </div>
     </section>
@@ -196,33 +223,28 @@ function CategoryChips({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-4 pt-2 md:flex-wrap md:overflow-visible">
-      <Badge
-        variant={selected === "ALL" ? "default" : "outline"}
-        className={cn(
-          "shrink-0 cursor-pointer transition-all duration-200 px-3.5 py-1 text-xs font-semibold rounded-full border-border/70",
-          selected === "ALL"
-            ? "bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm"
-            : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
-        )}
-        onClick={() => onSelect("ALL")}
-      >
-        All Fields
-      </Badge>
-      {categories.map((category) => (
-        <Badge
+    <div
+      className="flex gap-2 overflow-x-auto pb-2"
+      aria-label="Course categories"
+    >
+      {[
+        { id: "ALL", name: "All Fields" },
+        ...categories.map((c) => ({ id: String(c.id), name: c.name })),
+      ].map((category) => (
+        <button
           key={category.id}
-          variant={selected === String(category.id) ? "default" : "outline"}
+          type="button"
+          aria-pressed={selected === category.id}
+          onClick={() => onSelect(category.id)}
           className={cn(
-            "shrink-0 cursor-pointer transition-all duration-200 px-3.5 py-1 text-xs font-semibold rounded-full border-border/70",
-            selected === String(category.id)
-              ? "bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm"
-              : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
+            "min-h-11 shrink-0 rounded-full border px-5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+            selected === category.id
+              ? "border-foreground bg-foreground text-background"
+              : "border-border bg-background text-muted-foreground hover:border-foreground hover:text-foreground",
           )}
-          onClick={() => onSelect(String(category.id))}
         >
           {category.name}
-        </Badge>
+        </button>
       ))}
     </div>
   );
@@ -232,7 +254,10 @@ function CourseGridSkeleton() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="space-y-3 rounded-[--radius-card] border p-0 overflow-hidden bg-card">
+        <div
+          key={i}
+          className="space-y-3 rounded-[var(--radius-card)] border p-0 overflow-hidden bg-card"
+        >
           <Skeleton className="aspect-video w-full" />
           <div className="space-y-2 p-4">
             <Skeleton className="h-4 w-3/4" />
@@ -263,20 +288,53 @@ export function CatalogPage() {
   const [level, setLevel] = React.useState(initialLevel);
   const [categoryId, setCategoryId] = React.useState(initialCategoryId);
   const [sort, setSort] = React.useState(initialSort);
-  const [page, setPage] = React.useState(Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 0);
+  const [page, setPage] = React.useState(
+    Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 0,
+  );
 
   const debouncedSearch = useDebounce(search, 300);
+  const urlState = searchParams.toString();
+  const lastInternalUrl = React.useRef(urlState);
 
   React.useEffect(() => {
+    if (urlState === lastInternalUrl.current) return;
+    setSearch(initialSearch);
+    setLevel(initialLevel);
+    setCategoryId(initialCategoryId);
+    setSort(initialSort);
+    setPage(Number.isInteger(initialPage) && initialPage > 0 ? initialPage : 0);
+  }, [
+    initialCategoryId,
+    initialLevel,
+    initialPage,
+    initialSearch,
+    initialSort,
+    urlState,
+  ]);
+
+  React.useEffect(() => {
+    if (debouncedSearch !== search) return;
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (level !== "ALL") params.set("level", level);
     if (categoryId !== "ALL") params.set("categoryId", categoryId);
     if (sort !== "createdAt,desc") params.set("sort", sort);
     if (page > 0) params.set("page", String(page));
-    const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const next = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
+    lastInternalUrl.current = params.toString();
     router.replace(next, { scroll: false });
-  }, [categoryId, debouncedSearch, level, page, pathname, router, sort]);
+  }, [
+    categoryId,
+    debouncedSearch,
+    level,
+    page,
+    pathname,
+    router,
+    search,
+    sort,
+  ]);
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories,
@@ -302,184 +360,234 @@ export function CatalogPage() {
 
   const resetPage = () => setPage(0);
 
-  const handleHeroSearch = (value: string) => {
-    setSearch(value);
-    resetPage();
-  };
-
   const activeFilters = [
     level !== "ALL" && level,
-    categoryId !== "ALL" && categories.find((c) => String(c.id) === categoryId)?.name,
+    categoryId !== "ALL" &&
+      categories.find((c) => String(c.id) === categoryId)?.name,
     debouncedSearch,
   ].filter(Boolean);
 
   const filters = (
     <FilterPanel
       search={search}
-      setSearch={(value) => { setSearch(value); resetPage(); }}
+      setSearch={(value) => {
+        setSearch(value);
+        resetPage();
+      }}
       level={level}
-      setLevel={(value) => { setLevel(value); resetPage(); }}
+      setLevel={(value) => {
+        setLevel(value);
+        resetPage();
+      }}
       categoryId={categoryId}
-      setCategoryId={(value) => { setCategoryId(value); resetPage(); }}
+      setCategoryId={(value) => {
+        setCategoryId(value);
+        resetPage();
+      }}
       sort={sort}
-      setSort={(value) => { setSort(value); resetPage(); }}
+      setSort={(value) => {
+        setSort(value);
+        resetPage();
+      }}
       categories={categories}
     />
   );
 
   return (
     <MarketplaceLayout>
-      <HeroSection onSearch={handleHeroSearch} />
-
-      <section className="border-b border-border/70 bg-background/72 backdrop-blur">
-        <div className="mx-auto grid max-w-[1400px] gap-3 px-4 py-4 text-sm md:grid-cols-3 md:px-6">
-          {[
-            ["Structured courses", "Clear outcomes, lessons, quiz and assignment links."],
-            ["Role-aware workspace", "Learners, instructors, and admins each get focused tools."],
-            ["Checkout ready", "Wishlist, cart, coupon, order, and retry flows are wired."],
-          ].map(([title, body]) => (
-            <div key={title} className="rounded-[--radius-card] border border-border/70 bg-card/70 p-4">
-              <p className="font-semibold tracking-tight">{title}</p>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-6">
-        {/* Category chips */}
-        {categories.length > 0 ? (
-          <div className="mb-6 overflow-x-auto scrollbar-none pb-2">
-            <CategoryChips
-              categories={categories}
-              selected={categoryId}
-              onSelect={(id) => { setCategoryId(id); resetPage(); }}
+      {!debouncedSearch &&
+      level === "ALL" &&
+      categoryId === "ALL" &&
+      page === 0 ? (
+        <HeroSection />
+      ) : null}
+      <div className="mx-auto max-w-[1400px] px-4 py-10 md:px-6 lg:px-10">
+        <section className="mb-8" aria-label="Browse by subject">
+          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+            What will you learn next?
+          </h2>
+          <p className="mb-6 mt-2 text-base text-muted-foreground">
+            Explore a new interest. Build on what you know.
+          </p>
+          {categoriesQuery.isError ? (
+            <ErrorState
+              message="Categories could not be loaded."
+              onRetry={() => categoriesQuery.refetch()}
             />
+          ) : null}
+          <CategoryChips
+            categories={categories}
+            selected={categoryId}
+            onSelect={(id) => {
+              setCategoryId(id);
+              resetPage();
+            }}
+          />
+        </section>
+        <section
+          id="courses"
+          className="scroll-mt-24 border-t pt-8"
+          aria-label="Course catalog"
+        >
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">
+                {debouncedSearch
+                  ? `Results for "${debouncedSearch}"`
+                  : "All courses"}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground" role="status">
+                {coursesQuery.isSuccess
+                  ? `${courses.totalElements.toLocaleString()} result${courses.totalElements !== 1 ? "s" : ""}`
+                  : "Finding courses for you..."}
+              </p>
+            </div>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="h-11 md:hidden">
+                  <SlidersHorizontal aria-hidden="true" /> Filters
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Filters</SheetTitle>
+                  <SheetDescription>
+                    Find a course that fits your goals.
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="p-5">{filters}</div>
+              </SheetContent>
+            </Sheet>
           </div>
-        ) : null}
-
-        {/* Results header */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-5">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold tracking-tight text-foreground">
-              {debouncedSearch
-                ? `Results for "${debouncedSearch}"`
-                : "All courses"}
-            </h2>
-            {coursesQuery.isSuccess ? (
-              <span className="rounded-[--radius-button] bg-muted/70 px-2.5 py-1 text-sm font-semibold text-muted-foreground/80">
-                {courses.totalElements.toLocaleString()} result{courses.totalElements !== 1 ? "s" : ""}
-              </span>
-            ) : null}
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Active filter badges */}
-            {activeFilters.map((filter) => (
-              <Badge key={String(filter)} variant="secondary" className="gap-1.5 px-2.5 py-0.5 text-xs rounded-md border-0 bg-primary/10 text-primary">
-                {String(filter)}
-                <X
-                  className="h-3.5 w-3.5 cursor-pointer hover:text-foreground transition-colors"
+          {activeFilters.length || sort !== "createdAt,desc" ? (
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              {activeFilters.map((filter) => (
+                <Button
+                  key={String(filter)}
+                  variant="secondary"
+                  className="h-11 max-w-full text-sm"
+                  aria-label={`Remove ${filter} filter`}
                   onClick={() => {
                     if (filter === debouncedSearch) setSearch("");
                     if (filter === level) setLevel("ALL");
-                    const matchedCategory = categories.find((c) => c.name === filter);
-                    if (matchedCategory) setCategoryId("ALL");
+                    if (categories.some((c) => c.name === filter))
+                      setCategoryId("ALL");
                     resetPage();
                   }}
-                />
-              </Badge>
-            ))}
-            {activeFilters.length > 0 || sort !== "createdAt,desc" ? (
+                >
+                  <span className="truncate">{String(filter)}</span>
+                  <X aria-hidden="true" />
+                </Button>
+              ))}
               <Button
                 variant="ghost"
-                size="sm"
-                className="text-xs font-semibold text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setSearch("");
                   setLevel("ALL");
                   setCategoryId("ALL");
                   setSort("createdAt,desc");
-                  setPage(0);
+                  resetPage();
                 }}
               >
                 Clear all filters
               </Button>
-            ) : null}
-            {/* Mobile filter */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="md:hidden">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Filters
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetTitle>Filters</SheetTitle>
-                <div className="mt-6">{filters}</div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-
-        {/* Main grid with sidebar */}
-        <div className="grid gap-8 md:grid-cols-[250px_1fr]">
-          {/* Desktop filter sidebar */}
-          <aside className="panel-ring hidden h-fit rounded-[--radius-card] bg-card/86 p-5 md:block sticky-purchase">
-            <h3 className="text-sm font-bold text-foreground mb-4 pb-2 border-b border-border/40">Filters</h3>
-            {filters}
-          </aside>
-
-          {/* Course grid */}
-          <section>
-            {coursesQuery.isLoading ? <CourseGridSkeleton /> : null}
-            {coursesQuery.isError ? (
-              <ErrorState
-                message={(coursesQuery.error as Error).message}
-                onRetry={() => coursesQuery.refetch()}
-              />
-            ) : null}
-            {coursesQuery.isSuccess && courses.content.length === 0 ? (
-              <EmptyState
-                title="No courses found"
-                message="Try adjusting the filters or searching for a different topic."
-              />
-            ) : null}
-            {courses.content.length > 0 ? (
-              <>
-                <div className="grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {courses.content.map((course, index) => (
-                    <CourseCard key={course.id} course={course} priority={index < 3} />
-                  ))}
-                </div>
-                <div className="mt-8 flex items-center justify-between gap-3 border-t border-border/40 pt-6">
-                  <p className="text-xs font-semibold text-muted-foreground/80">
-                    Showing Page {courses.page + 1} of {Math.max(courses.totalPages, 1)}
-                  </p>
-                  <div className="flex gap-2">
+            </div>
+          ) : null}
+          <div className="grid gap-8 md:grid-cols-[210px_minmax(0,1fr)] lg:gap-10">
+            <aside
+              className="hidden border-r pr-6 md:block"
+              aria-label="Filters"
+            >
+              <h3 className="mb-6 flex items-center gap-2 font-semibold">
+                <SlidersHorizontal aria-hidden="true" className="size-4" />{" "}
+                Filters
+              </h3>
+              {filters}
+            </aside>
+            <div className="min-w-0">
+              {coursesQuery.isLoading ? <CourseGridSkeleton /> : null}
+              {coursesQuery.isError ? (
+                <ErrorState
+                  message={(coursesQuery.error as Error).message}
+                  onRetry={() => coursesQuery.refetch()}
+                />
+              ) : null}
+              {coursesQuery.isSuccess && !courses.content.length ? (
+                <EmptyState
+                  title="No courses found"
+                  message="Try a different keyword or clear your filters to explore more courses."
+                  action={
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="text-xs h-9 font-semibold"
-                      disabled={courses.first}
-                      onClick={() => setPage((value) => Math.max(0, value - 1))}
+                      onClick={() => {
+                        setSearch("");
+                        setLevel("ALL");
+                        setCategoryId("ALL");
+                        resetPage();
+                      }}
                     >
-                      Previous
+                      Clear all filters
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-9 font-semibold"
-                      disabled={courses.last}
-                      onClick={() => setPage((value) => value + 1)}
-                    >
-                      Next
-                    </Button>
+                  }
+                />
+              ) : null}
+              {coursesQuery.isSuccess && courses.content.length > 0 ? (
+                <>
+                  <div className="grid gap-x-5 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
+                    {courses.content.map((course, index) => (
+                      <CourseCard
+                        key={course.id}
+                        course={course}
+                        priority={index < 3}
+                      />
+                    ))}
                   </div>
-                </div>
-              </>
-            ) : null}
-          </section>
-        </div>
+                  <div className="mt-9 flex flex-wrap items-center justify-between gap-3 border-t pt-6">
+                    <p className="text-sm text-muted-foreground">
+                      Showing Page {courses.page + 1} of{" "}
+                      {Math.max(courses.totalPages, 1)}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        disabled={courses.first}
+                        onClick={() => setPage((v) => Math.max(0, v - 1))}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={courses.last}
+                        onClick={() => setPage((v) => v + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </section>
+        <section className="mt-14 grid items-center gap-6 rounded-xl border bg-accent/40 p-6 md:grid-cols-[auto_1fr_auto] md:p-8">
+          <div className="flex size-14 items-center justify-center rounded-full bg-background text-primary">
+            <BookOpen aria-hidden="true" className="size-6" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">
+              Share what you know.
+            </h2>
+            <p className="mt-2 max-w-xl text-muted-foreground">
+              Turn your experience into a course and help learners take their
+              next step.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="h-12 justify-self-start">
+            <a href="/register">
+              Start teaching <ArrowRight aria-hidden="true" />
+            </a>
+          </Button>
+        </section>
       </div>
     </MarketplaceLayout>
   );

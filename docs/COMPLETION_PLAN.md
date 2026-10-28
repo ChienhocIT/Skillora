@@ -2,7 +2,9 @@
 
 Ngày lập: 28/10/2026. [Hiện trạng và khoảng trống B01–B12](PROJECT_REPORT.md). [Bản Docker local](DOCKER_PACKAGE.md). Đây là kế hoạch triển khai tiếp; các tính năng bên dưới chưa được tự động coi là đã làm trong đợt đóng gói.
 
-Cập nhật 29/10/2026: P03 đã hoàn tất và kiểm chứng local. P04.1 đã có cổng hoàn thành bài + đỗ quiz + giảng viên đánh dấu assignment Đạt, khóa cạnh tranh và mã chứng chỉ; P04 vẫn mở cho PDF, tra cứu công khai, quy trình thu hồi và xử lý dữ liệu legacy. Mã ứng dụng đã push ở `8052c35`, bài UAT chạy lặp đã sửa ở `78177e0`. Ưu tiên vận hành hiện tại là xác minh gói Docker từ commit sạch, thay build cũ, kết nối Vercel đúng team `chiendao278-7779` và cấu hình hạ tầng production theo [runbook](VERCEL_DEPLOYMENT.md). Các cổng nghiệm thu provider, nghiệp vụ tài chính và production vẫn bắt buộc.
+Cập nhật 29/10/2026: P03 đã hoàn tất và kiểm chứng local. P04.1 đã có cổng hoàn thành bài + đỗ quiz + giảng viên đánh dấu assignment Đạt, khóa cạnh tranh và mã chứng chỉ; P04 vẫn mở cho PDF, tra cứu công khai, quy trình thu hồi và xử lý dữ liệu legacy. Gói Docker `ade2c0e` đã qua cold start/9 UAT và các build cũ đã được dọn có chọn lọc, giữ backup/volumes. UI v2 trên `feature/marketplace-ui-20261029` đạt 47 browser test và 9 UAT local; [kiểm chứng UI](UI_RELEASE_VALIDATION.md). PR vào `main` phải gồm cả release nền và UI; không coi tạo PR/CI pass là nghiệm thu production.
+
+Thứ tự tiếp theo: (1) chốt P01 còn mở và làm P02 onboarding/xác minh giảng viên; (2) hoàn tất phần P04 còn lại, P05 giáo trình version và P06 upload; (3) hoàn thiện P07–P10 vòng đời tiền/hoàn tiền/quota/ledger/payout, nghiệm thu gateway sandbox được cấp phép; (4) P11–P15 tích hợp, review bảo mật còn thiếu, staging/TLS/restore/load/UAT và go-live. Có thể chuẩn bị staging song song khi đã có quyền truy cập/tài nguyên. Vercel cần kết nối đúng team `chiendao278-7779` và hạ tầng production theo [runbook](VERCEL_DEPLOYMENT.md). Các ước lượng gốc dưới đây cần refinement theo phần còn lại, không cộng thành deadline mới.
 
 ## Đích đến và điều kiện lập kế hoạch
 
@@ -29,8 +31,8 @@ Không cộng các con số thành một deadline cứng; quan hệ phụ thuộ
 |---|---|---|---|
 | P01 | Định nghĩa MVP/chính sách B01/B12; không phụ thuộc code | Ví dụ học chưa đỗ quiz, đổi giáo trình giữa khóa, thanh toán sau hủy, hoàn một phần, instructor bị khóa; xác nhận điều khoản/quyền riêng tư và kênh hỗ trợ | PO + QA, 2–4 |
 | P02 | Email verification và trạng thái giảng viên, B02; sau P01 | Token hash/TTL/một lần, resend/rate limit, chống enumeration; không xuất bản/bán khi chưa được cấp quyền theo chính sách; test từng vai trò | BE/FE/QA, 3–5 |
-| P03 | Quiz attempt server + TEXT UI, B03; sau P01 | Start/resume/deadline dựa giờ server; timeout, refresh tab, submit trùng/đồng thời không vượt maxAttempts; TEXT gửi đúng, không lộ đáp án trước khi cần | BE/FE/QA, 4–6 |
-| P04 | Completion/certificate, B04; sau P01 và P03 nếu cần đánh giá | Backend tính điều kiện đạt; học viên khác không đọc/sửa; PDF/tra cứu/thu hồi theo chính sách; phát mã một lần khi request cạnh tranh | BE/FE/QA, 4–7 |
+| P03 | Quiz attempt server + TEXT UI, B03; đã hoàn tất local | Start/resume/deadline, timeout, refresh, submit trùng/đồng thời, maxAttempts và TEXT đã kiểm chứng; giữ regression trong CI | Đã triển khai; 4–6 là ước lượng gốc |
+| P04 | Completion/certificate, B04; P04.1 đã hoàn tất local | Cổng eligibility/quyền/cạnh tranh đã có; còn PDF/tra cứu công khai/quy trình thu hồi và recompute legacy | BE/FE/QA; refine phần còn lại, 4–7 là ước lượng gốc |
 | P05 | Curriculum versioning, B05; sau P01 | Bản nháp riêng chứa section/lesson/quiz/assignment/resources; admin duyệt; enrollment pin/version upgrade có chính sách; rollback không mất bài nộp/tiến độ | BE/FE/QA, 5–9 |
 | P06 | Managed upload và Bunny acceptance, B06; sau P01, storage/provider được chọn | Giới hạn size/type, ownership, signed URL hết hạn, file không hợp lệ, retry/cleanup; Bunny upload → processing → webhook hợp lệ → playback được phép, lỗi hiện rõ | BE/FE/QA, 4–7 |
 | P07 | Order/payment lifecycle, B07; sau P01 | Đơn pending hết hạn; giá immutable/snapshot; callback ký đúng và so khớp amount; duplicate/out-of-order; cancel/settle race; charge thành công sau cancel có hàng đợi xử lý và audit; sandbox VNPay/MoMo theo gateway trong MVP | BE/QA/OPS, 5–8 |
@@ -55,4 +57,4 @@ P02 và P07–P10 nằm trong phạm vi ra mắt đã xác nhận; không loại
 
 ## Những đầu vào cần có khi chuyển sang triển khai tiếp
 
-Mô hình ra mắt đã được xác nhận. Chủ sản phẩm tiếp tục chốt các chính sách P01, đặc biệt hoa hồng/hoàn tiền/kỳ chốt/payout; OPS cung cấp domain/target staging riêng, mục tiêu backup/restore và tài nguyên; người phụ trách tích hợp chuẩn bị sandbox merchant, storage/video, SMTP và OAuth. Không đưa khóa bí mật vào issue hoặc tài liệu. Trong lúc chưa có các đầu vào này, có thể refined P03/P05 và viết acceptance với dữ liệu giả; không tự triển khai lên một VPS/stack đang có.
+Mô hình ra mắt và điều kiện cấp chứng chỉ đã được xác nhận. Chủ sản phẩm tiếp tục chốt P01 còn mở, đặc biệt hoa hồng/phí/thuế/hoàn tiền/kỳ chốt/payout và duyệt giảng viên; OPS cung cấp domain/target staging riêng, mục tiêu backup/restore và tài nguyên; người phụ trách tích hợp chuẩn bị sandbox merchant, storage/video, SMTP và OAuth. Không đưa khóa bí mật vào issue hoặc tài liệu. Trong lúc chưa có các đầu vào này, có thể hoàn tất PDF/tra cứu chứng chỉ và refine P02/P05/P06 với acceptance giả lập; không tự suy đoán chính sách tài chính hoặc triển khai lên VPS/stack khác.
