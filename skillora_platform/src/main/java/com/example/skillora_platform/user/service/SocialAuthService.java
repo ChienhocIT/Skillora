@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.skillora_platform.exception.BusinessException;
 import com.example.skillora_platform.exception.ResourceNotFoundException;
-import com.example.skillora_platform.user.dto.AuthResponse;
 import com.example.skillora_platform.user.entity.Role;
 import com.example.skillora_platform.user.entity.RoleName;
 import com.example.skillora_platform.user.entity.User;
@@ -38,10 +35,13 @@ public class SocialAuthService {
     private final AuthService authService;
 
     @Transactional
-    public AuthResponse authenticateGoogle(OAuth2User oAuth2User, HttpServletRequest request) {
+    public User authenticateGoogle(OAuth2User oAuth2User) {
         String email = normalizeEmail(oAuth2User.getAttribute("email"));
         if (email == null) {
             throw new BusinessException("Google account email is required", HttpStatus.BAD_REQUEST);
+        }
+        if (!Boolean.TRUE.equals(oAuth2User.getAttribute("email_verified"))) {
+            throw new BusinessException("Google account email must be verified", HttpStatus.UNAUTHORIZED);
         }
 
         User user = userRepository.findByEmailIgnoreCase(email)
@@ -49,8 +49,7 @@ public class SocialAuthService {
                 .orElseGet(() -> createGoogleUser(email, oAuth2User));
         authService.requireActiveAccount(user);
         user.setLastLoginAt(LocalDateTime.now());
-        User savedUser = userRepository.save(user);
-        return authService.issueTokens(savedUser, request);
+        return userRepository.save(user);
     }
 
     private User updateExistingGoogleUser(User user, OAuth2User oAuth2User) {

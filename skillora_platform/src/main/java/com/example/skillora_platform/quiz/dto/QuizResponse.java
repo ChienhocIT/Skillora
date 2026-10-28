@@ -19,6 +19,7 @@ public class QuizResponse {
     private Integer timeLimitMins;
     private Integer maxAttempts;
     private boolean shuffleQuestions;
+    private int questionCount;
     private List<QuestionResponse> questions;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

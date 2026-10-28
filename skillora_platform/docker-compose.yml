@@ -1,12 +1,12 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: skillora-mysql
+    container_name: ${SKILLORA_CONTAINER_PREFIX:-skillora}-mysql
     environment:
       MYSQL_DATABASE: ${DB_NAME:-Skillora}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-skillora-root-password}
     ports:
-      - "${MYSQL_HOST_PORT:-3307}:3306"
+      - "127.0.0.1:${MYSQL_HOST_PORT:-3307}:3306"
     volumes:
       - skillora_mysql:/var/lib/mysql
     healthcheck:
@@ -17,9 +17,9 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: skillora-redis
+    container_name: ${SKILLORA_CONTAINER_PREFIX:-skillora}-redis
     ports:
-      - "${REDIS_HOST_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     volumes:
       - skillora_redis:/data
     healthcheck:
@@ -31,7 +31,7 @@ services:
   app:
     build:
       context: .
-    container_name: skillora-app
+    container_name: ${SKILLORA_CONTAINER_PREFIX:-skillora}-app
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,13 +62,25 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       BUNNY_LIBRARY_ID: ${BUNNY_LIBRARY_ID:-}
       BUNNY_API_KEY: ${BUNNY_API_KEY:-}
+      BUNNY_TUS_ENDPOINT: ${BUNNY_TUS_ENDPOINT:-https://video.bunnycdn.com/tusupload}
+      BUNNY_UPLOAD_EXPIRATION: ${BUNNY_UPLOAD_EXPIRATION:-PT24H}
+      BUNNY_WEBHOOK_SIGNING_SECRET: ${BUNNY_WEBHOOK_SIGNING_SECRET:-}
+      BUNNY_TOKEN_SECURITY_KEY: ${BUNNY_TOKEN_SECURITY_KEY:-}
+      BUNNY_SIGNED_PLAYBACK_ENABLED: ${BUNNY_SIGNED_PLAYBACK_ENABLED:-true}
+      BUNNY_EMBED_TOKEN_TTL: ${BUNNY_EMBED_TOKEN_TTL:-PT2H}
+      BUNNY_PULL_ZONE_HOST: ${BUNNY_PULL_ZONE_HOST:-}
+      BUNNY_ALLOWED_MIME_TYPES: ${BUNNY_ALLOWED_MIME_TYPES:-video/mp4,video/webm,video/quicktime}
+      BUNNY_MAX_FILE_SIZE_BYTES: ${BUNNY_MAX_FILE_SIZE_BYTES:-5368709120}
+      PAYMENT_ENABLED: ${PAYMENT_ENABLED:-true}
+      VNPAY_URL: ${VNPAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      MOMO_ENDPOINT: ${MOMO_ENDPOINT:-https://test-payment.momo.vn/v2/gateway/api/create}
       VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
       MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-}
       MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-}
       MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:-}
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
     restart: unless-stopped
 
 volumes:

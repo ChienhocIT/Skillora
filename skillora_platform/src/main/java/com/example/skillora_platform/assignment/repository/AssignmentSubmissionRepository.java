@@ -1,6 +1,7 @@
 package com.example.skillora_platform.assignment.repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,9 @@ import com.example.skillora_platform.assignment.entity.AssignmentSubmission;
 import com.example.skillora_platform.assignment.entity.SubmissionStatus;
 
 public interface AssignmentSubmissionRepository extends JpaRepository<AssignmentSubmission, Long> {
+
+    @Query("SELECT s.assignment.lesson.id FROM AssignmentSubmission s WHERE s.enrollment.id = :enrollmentId AND s.status = com.example.skillora_platform.assignment.entity.SubmissionStatus.GRADED AND s.passed = true")
+    Set<Long> findPassedLessonIds(@Param("enrollmentId") Long enrollmentId);
 
     Optional<AssignmentSubmission> findByAssignmentIdAndEnrollmentId(Long assignmentId, Long enrollmentId);
 

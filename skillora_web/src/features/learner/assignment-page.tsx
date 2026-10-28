@@ -52,7 +52,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
     setFileUrl((current) => current || mySubmission.fileUrl || "");
   }, [mySubmission]);
 
-  const isSubmitted = Boolean(mySubmission);
+  const isSubmitted = Boolean(mySubmission && mySubmission.status !== "RETURNED");
   const isGraded = mySubmission?.status === "GRADED";
   const dueAt = assignmentData?.dueAt;
 
@@ -233,6 +233,9 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
                           <span>Your Score</span>
                           <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{mySubmission.score} / {assignmentData.maxScore ?? 100}</span>
                         </div>
+                        <p className="text-xs font-bold">
+                          {mySubmission.passed == null ? "Awaiting instructor pass/fail confirmation" : mySubmission.passed ? "Passed" : "Not passed"}
+                        </p>
                         {mySubmission.feedback ? (
                           <div className="rounded-lg bg-muted/20 p-3 text-xs text-muted-foreground/90 border border-border/55">
                             <p className="font-bold text-foreground mb-1.5">Instructor feedback:</p>

@@ -15,13 +15,10 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
-import com.example.skillora_platform.course.entity.Course;
-import com.example.skillora_platform.course.service.CoursePermissionService;
-import com.example.skillora_platform.course.service.LessonService;
 import com.example.skillora_platform.enrollment.entity.Enrollment;
 import com.example.skillora_platform.enrollment.entity.EnrollmentStatus;
-import com.example.skillora_platform.enrollment.service.LearningAccessService;
 import com.example.skillora_platform.enrollment.service.LearningProgressService;
 import com.example.skillora_platform.exception.BusinessException;
 import com.example.skillora_platform.quiz.dto.QuizAnswerSubmitRequest;
@@ -47,43 +44,25 @@ import lombok.extern.slf4j.Slf4j;
 public class QuizSubmissionService {
 
     private final QuizService quizService;
-    private final CoursePermissionService permissionService;
-    private final LessonService lessonService;
-    private final LearningAccessService learningAccessService;
+    private final QuizAttemptService attemptService;
     private final LearningProgressService learningProgressService;
     private final QuizAttemptRepository quizAttemptRepository;
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public QuizAttemptResponse submit(Long quizId, QuizSubmitRequest request, String actorEmail) {
-        User actor = permissionService.requireActor(actorEmail);
-        Quiz quiz = quizService.findQuizWithLesson(quizId);
-        Course course = quiz.getLesson().getSection().getCourse();
-        if (!lessonService.isPublishedLearningContent(quiz.getLesson())) {
-            throw new BusinessException("Enrollment required to submit this quiz", HttpStatus.FORBIDDEN);
+        QuizAttempt attempt = attemptService.requireAttempt(quizId, request.getAttemptId(), actorEmail);
+        if (attempt.getSubmittedAt() != null) {
+            return quizService.toAttemptResponse(attempt, true);
         }
-        Enrollment enrollment = learningAccessService.getActiveEnrollment(actor.getId(), course.getId());
-        if (enrollment == null) {
-            throw new BusinessException("Enrollment required to submit this quiz", HttpStatus.FORBIDDEN);
+        if (attempt.isExpired()) {
+            throw new BusinessException("Quiz attempt has expired", HttpStatus.CONFLICT);
         }
-
-        long attemptCount = quizAttemptRepository.countByEnrollmentIdAndQuizId(enrollment.getId(), quiz.getId());
-        if (quiz.getMaxAttempts() != null && attemptCount >= quiz.getMaxAttempts()) {
-            throw new BusinessException("Maximum quiz attempts reached", HttpStatus.CONFLICT);
-        }
-
+        Quiz quiz = attempt.getQuiz();
+        Enrollment enrollment = attempt.getEnrollment();
+        User actor = attempt.getUser();
         List<Question> questions = quizService.loadQuestions(quiz);
         Map<Long, QuizAnswerSubmitRequest> submittedAnswers = validateAnswerCoverage(request, questions);
-        LocalDateTime now = LocalDateTime.now();
-        QuizAttempt attempt = QuizAttempt.builder()
-                .enrollment(enrollment)
-                .quiz(quiz)
-                .user(actor)
-                .attemptNo((int) attemptCount + 1)
-                .startedAt(now)
-                .submittedAt(now)
-                .score(BigDecimal.ZERO)
-                .passed(false)
-                .build();
+        attempt.setSubmittedAt(LocalDateTime.now());
 
         List<PendingSelection> pendingSelections = new ArrayList<>();
         BigDecimal earnedPoints = BigDecimal.ZERO;
@@ -157,6 +136,11 @@ public class QuizSubmissionService {
                 .map(optionId -> findOption(optionById, optionId))
                 .toList();
 
+        if (question.getType() == QuestionType.TEXT && (!selectedIds.isEmpty()
+                || answer.getTextAnswer() == null || answer.getTextAnswer().isBlank())) {
+            throw new BusinessException("Text questions require a text answer without selected options",
+                    HttpStatus.BAD_REQUEST);
+        }
         boolean correct = switch (question.getType()) {
             case SINGLE, TRUE_FALSE -> gradeSingleChoice(question, selectedIds);
             case MULTIPLE -> gradeMultipleChoice(question, selectedIds);

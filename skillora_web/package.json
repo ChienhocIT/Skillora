@@ -9,6 +9,7 @@
     "start:standalone": "node scripts/start-standalone.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test:proxy": "node --test tests/proxy.test.mjs",
     "test:contract:no-mock-src": "node scripts/check-no-src-mock.mjs",
     "test:e2e": "node scripts/run-playwright.mjs",
     "test:e2e:smoke": "node scripts/run-playwright.mjs tests/e2e/smoke.spec.ts",

@@ -24,6 +24,7 @@ import com.example.skillora_platform.quiz.dto.QuizResponse;
 import com.example.skillora_platform.quiz.dto.QuizSubmitRequest;
 import com.example.skillora_platform.quiz.dto.QuizUpdateRequest;
 import com.example.skillora_platform.quiz.service.QuizHistoryService;
+import com.example.skillora_platform.quiz.service.QuizAttemptService;
 import com.example.skillora_platform.quiz.service.QuizService;
 import com.example.skillora_platform.quiz.service.QuizSubmissionService;
 
@@ -36,6 +37,16 @@ public class QuizController {
     private final QuizService quizService;
     private final QuizSubmissionService quizSubmissionService;
     private final QuizHistoryService quizHistoryService;
+    private final QuizAttemptService quizAttemptService;
+
+    @PostMapping(Constants.QUIZ_API_PREFIX + "/{id}/attempts/start")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ApiResponse<QuizAttemptResponse> start(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ApiResponse.success(quizAttemptService.start(id, jwt.getSubject()));
+    }
 
     @PostMapping(Constants.QUIZ_API_PREFIX)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")

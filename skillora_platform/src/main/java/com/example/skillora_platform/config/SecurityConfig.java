@@ -75,6 +75,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, Constants.AUTH_API_PREFIX + "/register").permitAll()
                         .requestMatchers(HttpMethod.POST, Constants.AUTH_API_PREFIX + "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, Constants.AUTH_API_PREFIX + "/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, Constants.AUTH_API_PREFIX + "/oauth2/exchange").permitAll()
                         .requestMatchers(HttpMethod.POST, Constants.AUTH_API_PREFIX + "/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, Constants.AUTH_API_PREFIX + "/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, Constants.AUTH_API_PREFIX + "/reset-password").permitAll()

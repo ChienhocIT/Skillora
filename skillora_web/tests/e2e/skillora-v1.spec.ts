@@ -75,7 +75,7 @@ const pageResponse = (content: unknown[], total = 1) => ({
 
 const wrap = (data: unknown) => ({ success: true, data });
 const json = (body: unknown) => ({ contentType: "application/json", body: JSON.stringify(body) });
-const emptyCart = { items: [], subtotal: 0, total: 0, currency: "VND" };
+const emptyCart = { items: [], subtotalAmount: 0, currency: "VND" };
 
 /* ---------- Mock student auth ---------- */
 
@@ -308,10 +308,9 @@ test.describe("4. Learner Revenue Flow", () => {
     await setupStudentRoutes(page);
     const cart = {
       items: [
-        { courseId: 101, title: "Spring Boot Production Course", price: 1200000, discountPrice: 890000, currency: "VND" },
+        { course: { id: 101, title: "Spring Boot Production Course", price: 1200000, discountPrice: 890000, currency: "VND" } },
       ],
-      subtotal: 890000,
-      total: 890000,
+      subtotalAmount: 890000,
       currency: "VND",
     };
     await page.route("**/api/backend/cart**", (route) =>
@@ -377,37 +376,64 @@ test.describe("5. Learner Learning Experience", () => {
     await expect(page.getByText(/active/i).first()).toBeVisible();
   });
 
-  test("quiz page renders questions and submit button", async ({ page }) => {
+  test("quiz requires start, resumes TEXT draft after reload and submits attempt ID", async ({ page }) => {
     await setupStudentRoutes(page);
-    await page.route("**/api/backend/quizzes/1", (route) =>
-      route.fulfill(json(wrap({
-        id: 1,
-        title: "Module 1 Quiz",
-        description: "Test your knowledge",
-        passingScore: 80,
-        questions: [
-          {
-            id: 100,
-            content: "What is Spring Boot?",
-            type: "SINGLE",
-            answerOptions: [
-              { id: 200, content: "A Java framework", correct: true },
-              { id: 201, content: "A database", correct: false },
-            ],
-          },
-        ],
-      }))),
-    );
-    await page.route("**/api/backend/quizzes/1/attempts", (route) =>
-      route.fulfill(json(wrap([]))),
-    );
-
+    let started = false;
+    let submitted = false;
+    let startCalls = 0;
+    const attempt = { id: 91, quizId: 1, status: "IN_PROGRESS", serverTime: "2026-10-28T15:00:00Z", deadlineAt: "2026-10-28T15:05:00Z" };
+    const questions = [
+      { id: 100, content: "What is Spring Boot?", type: "SINGLE", answerOptions: [
+        { id: 200, content: "A Java framework" }, { id: 201, content: "A database" },
+      ] },
+      { id: 101, content: "Name the backend framework", type: "TEXT", answerOptions: [] },
+    ];
+    await page.route("**/api/backend/quizzes/1", route => route.fulfill(json(wrap({
+      id: 1, title: "Module 1 Quiz", passScore: 70, questionCount: 2, questions: started ? questions : [],
+    }))));
+    await page.route("**/api/backend/quizzes/1/attempts", route => route.fulfill(json(wrap(started ? [attempt] : []))));
+    await page.route("**/api/backend/quizzes/1/attempts/start", route => {
+      started = true; startCalls++;
+      return route.fulfill(json(wrap(attempt)));
+    });
+    await page.route("**/api/backend/quizzes/1/submit", route => {
+      expect(route.request().postDataJSON()).toEqual({ attemptId: 91, answers: [
+        { questionId: 100, selectedOptionIds: [200] }, { questionId: 101, textAnswer: "Spring Boot" },
+      ] });
+      submitted = true;
+      return route.fulfill(json(wrap({ ...attempt, status: "SUBMITTED", passed: true, score: 100, answers: [] })));
+    });
     await page.goto("/quizzes/1");
-    await expect(page.getByText("Module 1 Quiz").first()).toBeVisible();
-    await expect(page.getByText("What is Spring Boot?").first()).toBeVisible();
-    // Correct answer styling should NOT be visible before submit
-    await expect(page.locator(".border-primary.bg-primary\\/5")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /submit quiz/i })).toBeVisible();
+    await expect(page.getByText("What is Spring Boot?")).toHaveCount(0);
+    await page.getByRole("button", { name: "Start Quiz", exact: true }).click();
+    await expect(page.getByRole("timer")).toContainText("4:");
+    await page.getByText("A database", { exact: true }).click();
+    await page.getByText("A Java framework", { exact: true }).click();
+    await expect(page.getByRole("checkbox").nth(1)).not.toBeChecked();
+    await page.getByLabel("Your answer for question 2").fill("Spring Boot");
+    await page.reload();
+    await expect(page.getByLabel("Your answer for question 2")).toHaveValue("Spring Boot");
+    await expect(page.getByRole("timer")).toBeVisible();
+    await page.getByRole("button", { name: "Submit Quiz", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Quiz Completed!" })).toBeVisible();
+    expect(submitted).toBe(true);
+    expect(startCalls).toBe(1);
+    expect(await page.evaluate(() => sessionStorage.getItem("skillora:quiz-attempt:91"))).toBeNull();
+  });
+
+  test("expired timer consumes the attempt and prevents submission", async ({ page }) => {
+    await setupStudentRoutes(page);
+    const attempt = { id: 92, quizId: 2, status: "IN_PROGRESS", serverTime: "2026-10-28T15:00:00Z", deadlineAt: "2026-10-28T15:00:02Z" };
+    await page.route("**/api/backend/quizzes/2", route => route.fulfill(json(wrap({
+      id: 2, title: "Expiring quiz", questionCount: 1, maxAttempts: 1,
+      questions: [{ id: 101, type: "TEXT", content: "Answer promptly", answerOptions: [] }],
+    }))));
+    await page.route("**/api/backend/quizzes/2/attempts", route => route.fulfill(json(wrap([attempt]))));
+    await page.goto("/quizzes/2");
+    await page.getByLabel("Your answer for question 1").fill("answer");
+    await expect(page.getByText("Time is up. This attempt counts toward your limit.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Submit Quiz", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Retake Quiz", exact: true })).toBeDisabled();
   });
 
   test("assignment page shows instructions and submit form", async ({ page }) => {

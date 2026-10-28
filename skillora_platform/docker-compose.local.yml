@@ -31,7 +31,7 @@ services:
     build:
       context: ../skillora_web
       dockerfile: Dockerfile
-    container_name: skillora-frontend
+    container_name: ${SKILLORA_CONTAINER_PREFIX:-skillora}-frontend
     depends_on:
       app:
         condition: service_healthy

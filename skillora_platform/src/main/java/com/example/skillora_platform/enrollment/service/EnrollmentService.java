@@ -42,6 +42,7 @@ public class EnrollmentService {
     private final CourseCertificateRepository courseCertificateRepository;
     private final CoursePermissionService permissionService;
     private final ApplicationEventPublisher eventPublisher;
+    private final CompletionEligibilityService eligibilityService;
 
     @Transactional
     public EnrollmentResponse enroll(Long courseId, String actorEmail) {
@@ -125,13 +126,16 @@ public class EnrollmentService {
         Enrollment enrollment = findEnrollment(enrollmentId);
         requireEnrollmentOwner(enrollment, actor);
 
-        if (enrollment.getStatus() != EnrollmentStatus.COMPLETED) {
+        if (enrollment.getStatus() != EnrollmentStatus.COMPLETED || !eligibilityService.assess(enrollment).eligible()) {
             throw new BusinessException("Course not yet completed", HttpStatus.BAD_REQUEST);
         }
 
         CourseCertificate certificate = courseCertificateRepository.findByEnrollmentId(enrollmentId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Certificate not found for enrollment: " + enrollmentId));
+        if (certificate.getRevokedAt() != null) {
+            throw new BusinessException("Certificate has been revoked", HttpStatus.CONFLICT);
+        }
 
         return toCertificateResponse(certificate, enrollment);
     }

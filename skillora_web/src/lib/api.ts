@@ -103,6 +103,7 @@ import type {
   PaymentCreateResponse,
   Quiz,
   QuizAttempt,
+  QuizAnswerInput,
   Assignment,
   AssignmentSubmission,
   NotificationItem,
@@ -174,8 +175,23 @@ export const learnerApi = {
 };
 
 /* --- Commerce ---------------------------------------------------- */
+type CommerceCourseResponse = Omit<WishlistItem, "courseId" | "addedAt"> & { id: number };
+type CommerceItemsResponse = {
+  items: Array<{ course: CommerceCourseResponse; addedAt?: string }>;
+  subtotalAmount: number | string;
+  currency: string;
+};
+
 export const commerceApi = {
-  getCart: () => apiFetch<Cart>("/cart"),
+  getCart: async (): Promise<Cart> => {
+    const cart = await apiFetch<CommerceItemsResponse>("/cart");
+    return {
+      items: cart.items.map(({ course }) => ({ ...course, courseId: course.id })),
+      subtotal: cart.subtotalAmount,
+      total: cart.subtotalAmount,
+      currency: cart.currency,
+    };
+  },
   addToCart: (courseId: number) => apiFetch("/cart/" + courseId, { method: "POST" }),
   removeFromCart: (courseId: number) => apiFetch<void>(`/cart/${courseId}`, { method: "DELETE" }),
   checkout: (body?: { couponCode?: string }) =>
@@ -187,11 +203,14 @@ export const commerceApi = {
   createPayment: (gateway: "vnpay" | "momo", orderId: number) =>
     apiFetch<PaymentCreateResponse>(`/payments/${gateway}/create`, { method: "POST", body: { orderId } }),
   validateCoupon: (code: string) =>
-    apiFetch<{ valid: boolean; discountType?: string; discountValue?: number | string; message?: string }>(
+    apiFetch<{ discountType: string; discountValue: number | string }>(
       "/coupons/validate",
       { method: "POST", body: { code } },
     ),
-  getWishlist: () => apiFetch<WishlistItem[]>("/wishlist"),
+  getWishlist: async (): Promise<WishlistItem[]> => {
+    const wishlist = await apiFetch<Pick<CommerceItemsResponse, "items">>("/wishlist");
+    return wishlist.items.map(({ course, addedAt }) => ({ ...course, courseId: course.id, addedAt }));
+  },
   addToWishlist: (courseId: number) => apiFetch("/wishlist/" + courseId, { method: "POST" }),
   removeFromWishlist: (courseId: number) => apiFetch<void>(`/wishlist/${courseId}`, { method: "DELETE" }),
 };
@@ -199,8 +218,9 @@ export const commerceApi = {
 /* --- Quiz / Assignment ------------------------------------------- */
 export const practiceApi = {
   getQuiz: (quizId: number) => apiFetch<Quiz>(`/quizzes/${quizId}`),
-  submitQuiz: (quizId: number, answers: Array<{ questionId: number; selectedOptionIds: number[] }>) =>
-    apiFetch<QuizAttempt>(`/quizzes/${quizId}/submit`, { method: "POST", body: { answers } }),
+  startQuiz: (quizId: number) => apiFetch<QuizAttempt>(`/quizzes/${quizId}/attempts/start`, { method: "POST" }),
+  submitQuiz: (quizId: number, attemptId: number, answers: QuizAnswerInput[]) =>
+    apiFetch<QuizAttempt>(`/quizzes/${quizId}/submit`, { method: "POST", body: { attemptId, answers } }),
   getAttempts: (quizId: number) => apiFetch<QuizAttempt[]>(`/quizzes/${quizId}/attempts`),
   getAssignment: (assignmentId: number) => apiFetch<Assignment>(`/assignments/${assignmentId}`),
   submitAssignment: (assignmentId: number, body: { content?: string; fileUrl?: string }) =>
@@ -305,7 +325,9 @@ export const instructorApi = {
     apiFetch<PageResponse<AssignmentSubmission>>(`/assignments/${assignmentId}/submissions`, {
       query: query as ApiOptions["query"],
     }),
-  gradeSubmission: (submissionId: number, body: { status: string; score: number; feedback: string }) =>
+  gradeSubmission: (submissionId: number, body:
+    { status: "GRADED"; score: number; passed: boolean; feedback: string }
+    | { status: "RETURNED"; feedback: string }) =>
     apiFetch(`/submissions/${submissionId}/grade`, { method: "PATCH", body }),
 };
 

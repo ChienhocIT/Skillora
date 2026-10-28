@@ -79,7 +79,7 @@ export function LessonPage({ lessonId, enrollmentId }: { lessonId: number; enrol
                       variant="outline"
                       className="text-xs h-9 rounded-[--radius-button]"
                     />
-                    {enrollmentId ? (
+                    {enrollmentId && lessonData.type !== "QUIZ" && lessonData.type !== "ASSIGNMENT" ? (
                       <Button onClick={() => markDone.mutate()} disabled={markDone.isPending} className="text-xs h-9 font-semibold rounded-[--radius-button]">
                         <CheckCircle2 className="mr-2 h-4 w-4" />
                         Mark Complete

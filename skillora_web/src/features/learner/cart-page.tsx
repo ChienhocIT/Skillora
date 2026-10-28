@@ -46,16 +46,12 @@ export function CartPage() {
   const validateCoupon = useMutation({
     mutationFn: (code: string) => commerceApi.validateCoupon(code),
     onSuccess: (data) => {
-      if (data.valid) {
-        setAppliedCoupon({
-          code: couponCode.toUpperCase(),
-          discountType: data.discountType,
-          discountValue: data.discountValue,
-        });
-        toast.success("Coupon applied successfully");
-      } else {
-        toast.error(data.message ?? "Invalid coupon code");
-      }
+      setAppliedCoupon({
+        code: couponCode.toUpperCase(),
+        discountType: data.discountType,
+        discountValue: data.discountValue,
+      });
+      toast.success("Coupon applied successfully");
     },
     onError: (error) => toast.error((error as Error).message),
   });

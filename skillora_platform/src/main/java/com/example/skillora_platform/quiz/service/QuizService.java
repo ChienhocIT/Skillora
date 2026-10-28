@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,6 +39,7 @@ import com.example.skillora_platform.quiz.entity.QuizAttempt;
 import com.example.skillora_platform.quiz.entity.QuizAttemptAnswer;
 import com.example.skillora_platform.quiz.repository.QuestionRepository;
 import com.example.skillora_platform.quiz.repository.QuizRepository;
+import com.example.skillora_platform.quiz.repository.QuizAttemptRepository;
 import com.example.skillora_platform.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -50,6 +56,8 @@ public class QuizService {
     private final LessonService lessonService;
     private final CoursePermissionService permissionService;
     private final LearningAccessService learningAccessService;
+    private final QuizAttemptRepository attemptRepository;
+    private final EntityManager entityManager;
 
     @Transactional
     public QuizResponse create(QuizCreateRequest request, String actorEmail) {
@@ -80,7 +88,16 @@ public class QuizService {
     public QuizResponse get(Long id, String actorEmail) {
         Quiz quiz = findQuizWithLesson(id);
         boolean includeCorrect = requireReadAccess(quiz, actorEmail);
-        return toResponse(quiz, includeCorrect);
+        boolean includeQuestions = includeCorrect;
+        if (!includeCorrect) {
+            User actor = permissionService.requireActor(actorEmail);
+            var enrollment = learningAccessService.getActiveEnrollment(actor.getId(),
+                    quiz.getLesson().getSection().getCourse().getId());
+            includeQuestions = attemptRepository.findByEnrollmentIdAndQuizIdOrderByAttemptNoDesc(
+                            enrollment.getId(), id).stream().findFirst()
+                    .filter(attempt -> attempt.getSubmittedAt() == null && !attempt.isExpired()).isPresent();
+        }
+        return toResponse(quiz, includeCorrect, includeQuestions);
     }
 
     @Transactional
@@ -88,6 +105,11 @@ public class QuizService {
         Quiz quiz = findQuizWithLesson(id);
         User actor = permissionService.requireInstructorOrAdmin(actorEmail);
         permissionService.requireOwnerOrAdmin(quiz.getLesson().getSection().getCourse(), actor);
+
+        entityManager.refresh(quiz, LockModeType.PESSIMISTIC_WRITE);
+        if (attemptRepository.findFirstByQuizIdOrderByIdAsc(id).isPresent()) {
+            throw new BusinessException("Quiz with attempts cannot be edited", HttpStatus.CONFLICT);
+        }
 
         Lesson lesson = lessonService.findActiveLesson(request.getLessonId());
         permissionService.requireOwnerOrAdmin(lesson.getSection().getCourse(), actor);
@@ -117,13 +139,25 @@ public class QuizService {
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
     }
 
+    @Transactional
+    public Quiz lockQuizForAttempt(Long id) {
+        Quiz quiz = findQuizWithLesson(id);
+        entityManager.refresh(quiz, LockModeType.PESSIMISTIC_WRITE);
+        return quiz;
+    }
+
     @Transactional(readOnly = true)
     public List<Question> loadQuestions(Quiz quiz) {
         return questionRepository.findByQuizIdOrderByOrderIndexAscIdAsc(quiz.getId());
     }
 
     public QuizResponse toResponse(Quiz quiz, boolean includeCorrect) {
-        List<QuestionResponse> questions = loadQuestions(quiz).stream()
+        return toResponse(quiz, includeCorrect, true);
+    }
+
+    private QuizResponse toResponse(Quiz quiz, boolean includeCorrect, boolean includeQuestions) {
+        List<Question> source = loadQuestions(quiz);
+        List<QuestionResponse> questions = (includeQuestions ? source.stream() : java.util.stream.Stream.<Question>empty())
                 .map(question -> toQuestionResponse(question, includeCorrect))
                 .toList();
         return QuizResponse.builder()
@@ -136,6 +170,7 @@ public class QuizService {
                 .timeLimitMins(quiz.getTimeLimitMins())
                 .maxAttempts(quiz.getMaxAttempts())
                 .shuffleQuestions(quiz.isShuffleQuestions())
+                .questionCount(source.size())
                 .questions(questions)
                 .createdAt(quiz.getCreatedAt())
                 .updatedAt(quiz.getUpdatedAt())
@@ -156,6 +191,10 @@ public class QuizService {
                 .passed(attempt.isPassed())
                 .startedAt(attempt.getStartedAt())
                 .submittedAt(attempt.getSubmittedAt())
+                .status(attempt.getSubmittedAt() != null ? "SUBMITTED" : attempt.isExpired() ? "EXPIRED" : "IN_PROGRESS")
+                .deadlineAt(attempt.getDeadlineAt() == null ? null
+                        : attempt.getDeadlineAt().atZone(ZoneId.systemDefault()).toOffsetDateTime())
+                .serverTime(OffsetDateTime.now())
                 .answers(answers)
                 .build();
     }
@@ -260,7 +299,8 @@ public class QuizService {
     }
 
     private QuestionResponse toQuestionResponse(Question question, boolean includeCorrect) {
-        List<AnswerOptionResponse> options = question.getAnswerOptions().stream()
+        List<AnswerOptionResponse> options = (!includeCorrect && question.getType() == QuestionType.TEXT
+                ? java.util.stream.Stream.<AnswerOption>empty() : question.getAnswerOptions().stream())
                 .map(option -> AnswerOptionResponse.builder()
                         .id(option.getId())
                         .content(option.getContent())

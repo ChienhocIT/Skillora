@@ -197,6 +197,7 @@ class NotificationIntegrationTest {
                 .build());
         AssignmentGradeRequest gradeRequest = new AssignmentGradeRequest();
         gradeRequest.setStatus(SubmissionStatus.GRADED);
+        gradeRequest.setPassed(true);
         gradeRequest.setScore(BigDecimal.valueOf(95));
         gradeRequest.setFeedback("Good work");
         assignmentGradingService.grade(submission.getId(), gradeRequest, instructor.getEmail());

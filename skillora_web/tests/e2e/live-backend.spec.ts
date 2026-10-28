@@ -67,6 +67,7 @@ async function signIn(page: Page, email: string, password: string) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/(admin|instructor|dashboard)(\/|\?|$)/);
 }
 
 async function expectNoRequestFailure(page: Page) {
@@ -145,9 +146,10 @@ test.describe("live backend UAT release gate", () => {
   test("public catalog loads through the Next proxy", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: "Invest in your future" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Skills for your future/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "All courses" })).toBeVisible();
-    await expect(page.getByText("Spring Boot Production APIs")).toBeVisible();
+    await page.getByRole("textbox", { name: "Search keywords", exact: true }).fill("Spring Boot Production APIs");
+    await expect(page.getByRole("heading", { name: "Spring Boot Production APIs", exact: true })).toBeVisible();
     await expectNoRequestFailure(page);
   });
 
@@ -159,7 +161,12 @@ test.describe("live backend UAT release gate", () => {
     await expect(page.getByText("Spring Boot Production APIs")).toBeVisible();
     await expectNoRequestFailure(page);
 
-    await page.getByRole("link", { name: "Resume" }).first().click();
+    const enrollments = await api<PageData<{ id: number; courseTitle: string }>>(
+      page, "GET", "/enrollments/me?page=0&size=100",
+    );
+    const seeded = enrollments.content.find((item) => item.courseTitle === "Spring Boot Production APIs");
+    expect(seeded, "Seed enrollment should exist").toBeTruthy();
+    await page.locator(`a[href="/learn/${seeded!.id}"]`).filter({ hasText: "Resume" }).click();
     await expect(page).toHaveURL(/\/learn\/\d+/);
     await expect(page.getByRole("heading", { name: "Course progress" })).toBeVisible();
     await expect(page.getByText("Welcome and platform walkthrough")).toBeVisible();
@@ -189,8 +196,9 @@ test.describe("live backend UAT release gate", () => {
     await page.goto("/admin/courses");
     await expect(page.getByRole("heading", { name: "All Courses" })).toBeVisible();
     await expect(page.getByText("Kubernetes Deployment Playbook")).toBeVisible();
-    await expect(page.getByText("REVIEWING", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Approve" }).first()).toBeEnabled();
+    const seededCourseRow = page.getByRole("row").filter({ hasText: "Kubernetes Deployment Playbook" });
+    await expect(seededCourseRow.getByText("REVIEWING", { exact: true })).toBeVisible();
+    await expect(seededCourseRow.getByRole("button", { name: "Approve", exact: true })).toBeEnabled();
     await expectNoRequestFailure(page);
 
     await page.goto("/admin/users");
@@ -311,6 +319,7 @@ test.describe("live backend UAT release gate", () => {
     await api(page, "PATCH", `/admin/courses/${course.id}/approve`);
 
     await page.goto("/admin/courses");
+    await page.getByRole("tab", { name: "Published", exact: true }).click();
     await expect(page.getByText(title)).toBeVisible();
     await expectNoRequestFailure(page);
 
@@ -363,23 +372,32 @@ test.describe("live backend UAT release gate", () => {
 
     await page.goto(`/learn/${enrollment!.id}`);
     await expect(page.getByText("Welcome and platform walkthrough")).toBeVisible();
-    await page.getByRole("link", { name: /Course access control rules/ }).click();
+    const textLesson = lessons.find((lesson) => lesson.title === "Course access control rules");
+    expect(textLesson, "Seed text lesson should exist").toBeTruthy();
+    await page.locator(`a[href="/learn/${enrollment!.id}/lessons/${textLesson!.id}"]`).click();
     await expect(page).toHaveURL(/\/learn\/\d+\/lessons\/\d+/);
     await expect(page.getByRole("heading", { name: "Course access control rules" })).toBeVisible();
     const markComplete = page.getByRole("button", { name: "Mark Complete" });
     if (await markComplete.isVisible().catch(() => false)) {
       await markComplete.click();
-      await expect(page.getByText(/Lesson marked complete/i)).toBeVisible({ timeout: 8_000 }).catch(() => undefined);
+      await expect(page.getByText("Lesson marked as complete", { exact: true })).toBeVisible({ timeout: 8_000 });
     }
+    const progress = await api<Array<{ lessonId: number; completed: boolean }>>(
+      page, "GET", `/enrollments/${enrollment!.id}/progress`,
+    );
+    expect(progress.find((item) => item.lessonId === textLesson!.id)?.completed).toBe(true);
 
     const quiz = await api<{ maxAttempts?: number }>(page, "GET", `/quizzes/${quizLesson!.quizId}`);
     const attempts = await api<Array<{ id: number }>>(page, "GET", `/quizzes/${quizLesson!.quizId}/attempts`);
     await page.goto(`/quizzes/${quizLesson!.quizId}`);
     await expect(page.getByRole("heading", { name: "Access control quiz" })).toBeVisible();
     if (attempts.length < (quiz.maxAttempts ?? 3)) {
+      await page.getByRole("button", { name: /Start Quiz|Retake Quiz/ }).click();
       await page.getByText("The learner has ACTIVE or COMPLETED enrollment").click();
       await page.getByRole("button", { name: "Submit Quiz" }).click();
-      await expect(page.getByText(/Passed!|Failed/)).toBeVisible();
+      await expect(page.getByRole("heading", { name: /Quiz Completed!|Quiz Failed/ })).toBeVisible();
+      const updatedAttempts = await api<Array<{ id: number }>>(page, "GET", `/quizzes/${quizLesson!.quizId}/attempts`);
+      expect(updatedAttempts).toHaveLength(attempts.length + 1);
     } else {
       await expect(page.getByText(/Attempt/).first()).toBeVisible();
     }
@@ -388,12 +406,12 @@ test.describe("live backend UAT release gate", () => {
     await expect(page.getByRole("heading", { name: "Payment retry implementation note" })).toBeVisible();
     const submitAssignment = page.getByRole("button", { name: "Submit Assignment" });
     if (await submitAssignment.isVisible().catch(() => false)) {
-      await page.getByLabel("Submission notes / content").fill(`Live UAT submission ${runId}`);
+      await page.getByLabel("Submission notes / description").fill(`Live UAT submission ${runId}`);
       await page.getByLabel("File URL (e.g. Google Drive, GitHub repo)").fill("https://example.com/skillora-live-uat");
       await submitAssignment.click();
-      await expect(page.getByText("Your submission was recorded")).toBeVisible();
+      await expect(page.getByText("Submission Recorded", { exact: true })).toBeVisible();
     } else {
-      await expect(page.getByText("Your submission was recorded")).toBeVisible();
+      await expect(page.getByText("Submission Recorded", { exact: true })).toBeVisible();
     }
 
     await page.goto(`/courses/${seedCourse.id}`);
@@ -440,10 +458,126 @@ test.describe("live backend UAT release gate", () => {
     await expect(page.getByRole("heading", { name: "Audit Logs" })).toBeVisible();
 
     if (generatedCourse) {
-      const adminCourse = await api<{ status: string }>(page, "GET", `/admin/courses/${generatedCourse.courseId}`);
-      expect(adminCourse.status).toBe("PUBLISHED");
+      const adminCourse = await api<{ course: { status: string } }>(page, "GET", `/admin/courses/${generatedCourse.courseId}`);
+      expect(adminCourse.course.status).toBe("PUBLISHED");
     }
 
     await expectNoRequestFailure(page);
   });
+  test("timed TEXT quiz and explicit assignment pass gate one certificate", async ({ page }) => {
+    test.setTimeout(60_000);
+    await signIn(page, users.instructor.email, users.instructor.password);
+    const categories = await api<Array<{ id: number }>>(page, "GET", "/categories");
+    const courseTitle = `E2E Quiz Session ${runId}`;
+    const course = await api<{ id: number }>(page, "POST", "/courses", {
+      title: courseTitle, subtitle: "Quiz session UAT", description: "Real server deadline and TEXT grading",
+      level: "BEGINNER", language: "vi", price: 0, currency: "VND", categoryIds: [categories[0].id],
+      requirements: ["Test account"], outcomes: ["Complete a timed quiz"],
+    });
+    const section = await api<{ id: number }>(page, "POST", `/courses/${course.id}/sections`, {
+      title: "Quiz session section", orderIndex: 0, published: true,
+    });
+    const lesson = await api<{ id: number }>(page, "POST", `/sections/${section.id}/lessons`, {
+      title: "Timed TEXT practice", type: "QUIZ", content: "Quiz", orderIndex: 0, published: true, preview: false,
+    });
+    const quiz = await api<{ id: number; questions: Array<{ id: number; answerOptions: Array<{ id: number }> }> }>(page, "POST", "/quizzes", {
+      lessonId: lesson.id, title: "Timed TEXT practice", passScore: 100, timeLimitMins: 5, maxAttempts: 1,
+      questions: [
+        { content: "Choose the backend", type: "SINGLE", points: 10, orderIndex: 0, answerOptions: [
+          { content: "Spring Boot", correct: true, orderIndex: 0 }, { content: "Other", correct: false, orderIndex: 1 },
+        ] },
+        { content: "Name the backend framework", type: "TEXT", points: 10, orderIndex: 1,
+          answerOptions: [{ content: "Spring Boot", correct: true, orderIndex: 0 }] },
+      ],
+    });
+    const textLesson = await api<{ id: number }>(page, "POST", `/sections/${section.id}/lessons`, {
+      title: "Completion policy text", type: "TEXT", content: "Read before certification", orderIndex: 1, published: true,
+    });
+    const assignmentLesson = await api<{ id: number }>(page, "POST", `/sections/${section.id}/lessons`, {
+      title: "Explicit pass assignment", type: "ASSIGNMENT", content: "Submit for instructor decision", orderIndex: 2, published: true,
+    });
+    const assignment = await api<{ id: number }>(page, "POST", "/assignments", {
+      lessonId: assignmentLesson.id, title: "Explicit pass assignment", instructions: "Show your work", maxScore: 100,
+    });
+    await api(page, "PATCH", `/courses/${course.id}/publish`);
+    await signIn(page, users.admin.email, users.admin.password);
+    await api(page, "PATCH", `/admin/courses/${course.id}/approve`);
+    await signIn(page, users.learner.email, users.learner.password);
+    const enrollment = await api<{ id: number }>(page, "POST", `/courses/${course.id}/enroll`);
+    const fakeCompletion = await page.request.patch(`/api/backend/enrollments/${enrollment.id}/lessons/${lesson.id}/progress`, {
+      data: { completed: true, watchedSeconds: 9999 },
+    });
+    expect(fakeCompletion.status()).toBe(409);
+    await api(page, "PATCH", `/enrollments/${enrollment.id}/lessons/${textLesson.id}/progress`, { completed: true });
+    expect((await page.request.get(`/api/backend/enrollments/${enrollment.id}/certificate`)).status()).toBe(400);
+    const before = await api<{ questions: unknown[] }>(page, "GET", `/quizzes/${quiz.id}`);
+    expect(before.questions).toHaveLength(0);
+    await page.goto(`/quizzes/${quiz.id}`);
+    await page.getByRole("button", { name: "Start Quiz", exact: true }).click();
+    await expect(page.getByRole("timer")).toBeVisible();
+    const first = await api<Array<{ id: number; deadlineAt: string }>>(page, "GET", `/quizzes/${quiz.id}/attempts`);
+    expect(first).toHaveLength(1);
+    const view = await api<{ questions: Array<{ answerOptions: unknown[] }> }>(page, "GET", `/quizzes/${quiz.id}`);
+    expect(view.questions[1].answerOptions).toHaveLength(0);
+    await page.getByText("Spring Boot", { exact: true }).click();
+    await page.getByLabel("Your answer for question 2").fill(" spring boot ");
+    await page.reload();
+    await expect(page.getByLabel("Your answer for question 2")).toHaveValue(" spring boot ");
+    const resumed = await api<Array<{ id: number; deadlineAt: string }>>(page, "GET", `/quizzes/${quiz.id}/attempts`);
+    expect(resumed).toEqual(first.map((a) => expect.objectContaining({ id: a.id, deadlineAt: a.deadlineAt })));
+    await page.getByRole("button", { name: "Submit Quiz", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Quiz Completed!" })).toBeVisible();
+    const result = await api<{ id: number; score: number }>(page, "POST", `/quizzes/${quiz.id}/submit`, {
+      attemptId: first[0].id, answers: [
+        { questionId: quiz.questions[0].id, selectedOptionIds: [quiz.questions[0].answerOptions[0].id] },
+        { questionId: quiz.questions[1].id, textAnswer: "spring boot" },
+      ],
+    });
+    expect(result.id).toBe(first[0].id);
+    expect(Number(result.score)).toBe(100);
+    expect(await api<unknown[]>(page, "GET", `/quizzes/${quiz.id}/attempts`)).toHaveLength(1);
+    await expect(page.getByRole("button", { name: "Retake Quiz", exact: true })).toBeDisabled();
+    expect((await page.request.get(`/api/backend/enrollments/${enrollment.id}/certificate`)).status()).toBe(400);
+    const submission = await api<{ id: number }>(page, "POST", `/assignments/${assignment.id}/submit`, {
+      content: `Policy submission ${runId}`,
+    });
+    await signIn(page, users.instructor.email, users.instructor.password);
+    await api(page, "PATCH", `/submissions/${submission.id}/grade`, { status: "GRADED", score: 100, passed: false, feedback: "Needs review" });
+    await signIn(page, users.learner.email, users.learner.password);
+    expect((await page.request.get(`/api/backend/enrollments/${enrollment.id}/certificate`)).status()).toBe(400);
+    await signIn(page, users.instructor.email, users.instructor.password);
+    const openGrading = async () => {
+      await page.goto("/instructor/grading");
+      await page.getByRole("combobox").filter({ hasText: "Select course..." }).click();
+      await page.getByRole("option", { name: courseTitle, exact: true }).click();
+      await page.getByRole("combobox").filter({ hasText: "Select assignment..." }).click();
+      await page.getByRole("option", { name: "Assignment: Explicit pass assignment", exact: true }).click();
+      return page.getByRole("row").filter({ hasText: `Policy submission ${runId}` });
+    };
+    const returnedRow = await openGrading();
+    await returnedRow.getByRole("button", { name: "Return for revision", exact: true }).click();
+    await expect(page.getByText("Submission returned for revision", { exact: true })).toBeVisible();
+    await signIn(page, users.learner.email, users.learner.password);
+    await page.goto(`/assignments/${assignment.id}`);
+    await page.getByLabel("Submission notes / description").fill(`Policy submission ${runId} revised`);
+    await page.getByRole("button", { name: "Submit Assignment", exact: true }).click();
+    await expect(page.getByText("Submission Recorded", { exact: true })).toBeVisible();
+    await signIn(page, users.instructor.email, users.instructor.password);
+    const row = await openGrading();
+    await expect(row.getByRole("button", { name: "Grade", exact: true })).toBeDisabled();
+    await row.getByRole("combobox").click();
+    await page.getByRole("option", { name: "Pass", exact: true }).click();
+    await row.getByRole("spinbutton").fill("0");
+    await row.getByRole("button", { name: "Grade", exact: true }).click();
+    await expect(page.getByText("Submission graded", { exact: true })).toBeVisible();
+    await signIn(page, users.learner.email, users.learner.password);
+    const certificate = await api<{ certificateCode: string }>(page, "GET", `/enrollments/${enrollment.id}/certificate`);
+    expect(certificate.certificateCode).toMatch(/^CERT-/);
+    const repeated = await api<{ certificateCode: string }>(page, "GET", `/enrollments/${enrollment.id}/certificate`);
+    expect(repeated.certificateCode).toBe(certificate.certificateCode);
+    await page.goto(`/assignments/${assignment.id}`);
+    await expect(page.getByText("Passed", { exact: true })).toBeVisible();
+
+  });
+
 });

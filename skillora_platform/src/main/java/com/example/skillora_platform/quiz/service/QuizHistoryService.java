@@ -1,6 +1,7 @@
 package com.example.skillora_platform.quiz.service;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,11 @@ public class QuizHistoryService {
     private final LessonService lessonService;
     private final LearningAccessService learningAccessService;
     private final QuizAttemptRepository quizAttemptRepository;
+
+    @Transactional(readOnly = true)
+    public Set<Long> passedLessonIds(Long enrollmentId) {
+        return quizAttemptRepository.findPassedLessonIds(enrollmentId);
+    }
 
     @Transactional(readOnly = true)
     public List<QuizAttemptResponse> myAttempts(Long quizId, String actorEmail) {

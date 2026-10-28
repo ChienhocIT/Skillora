@@ -54,6 +54,10 @@ public class EnvironmentValidator implements ApplicationRunner {
             requireNonBlank(errors, "MOMO_PARTNER_CODE", environment.getProperty("skillora.payment.momo.partner-code"));
             requireNonBlank(errors, "MOMO_ACCESS_KEY", environment.getProperty("skillora.payment.momo.access-key"));
             requireNonBlank(errors, "MOMO_SECRET_KEY", environment.getProperty("skillora.payment.momo.secret-key"));
+            if (environment.getProperty("skillora.payment.ipn.whitelist-enabled", Boolean.class, false)) {
+                requireNonBlank(errors, "VNPAY_IPN_ALLOWED_IPS", environment.getProperty("skillora.payment.ipn.vnpay-allowed-ips"));
+                requireNonBlank(errors, "MOMO_IPN_ALLOWED_IPS", environment.getProperty("skillora.payment.ipn.momo-allowed-ips"));
+            }
         }
 
         if (!errors.isEmpty()) {

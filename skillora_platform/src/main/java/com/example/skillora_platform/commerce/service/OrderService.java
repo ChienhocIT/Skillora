@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -57,6 +60,7 @@ public class OrderService {
     private static final int MONEY_SCALE = 2;
 
     private final OrderRepository orderRepository;
+    private final EntityManager entityManager;
     private final CartItemRepository cartItemRepository;
     private final CouponRepository couponRepository;
     private final CourseRepository courseRepository;
@@ -135,8 +139,7 @@ public class OrderService {
     @Transactional
     public OrderResponse cancelOrder(Long orderId, String actorEmail) {
         User actor = permissionService.requireActor(actorEmail);
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        Order order = lockOrder(orderId);
         if (!order.getUser().getId().equals(actor.getId())) {
             throw new BusinessException("You do not own this order", HttpStatus.FORBIDDEN);
         }
@@ -157,8 +160,7 @@ public class OrderService {
             String gatewayTransactionId,
             Long paymentTransactionId
     ) {
-        Order order = orderRepository.findDetailedById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        Order order = lockOrder(orderId);
         if (order.getStatus() == OrderStatus.PAID) {
             return;
         }
@@ -183,8 +185,7 @@ public class OrderService {
 
     @Transactional
     public void markFailedFromGateway(Long orderId, Long paymentTransactionId, String reason) {
-        Order order = orderRepository.findDetailedById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        Order order = lockOrder(orderId);
         if (order.getStatus() != OrderStatus.PENDING) {
             return;
         }
@@ -193,6 +194,15 @@ public class OrderService {
         eventPublisher.publishEvent(new PaymentFailedEvent(order.getId(), paymentTransactionId, reason));
 
         log.info("Payment attempt failed for order {}, keeping order pending: {}", order.getId(), reason);
+    }
+
+    @Transactional
+    public Order lockOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        // Refresh under the lock: a callback may already hold an older managed Order instance.
+        entityManager.refresh(order, LockModeType.PESSIMISTIC_WRITE);
+        return order;
     }
 
     private void validateCart(User actor, Cart cart) {

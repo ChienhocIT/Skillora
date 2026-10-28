@@ -20,6 +20,7 @@ public class AssignmentSubmissionResponse {
     private String content;
     private String fileUrl;
     private BigDecimal score;
+    private Boolean passed;
     private String feedback;
     private SubmissionStatus status;
     private LocalDateTime submittedAt;

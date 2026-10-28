@@ -1,6 +1,10 @@
 package com.example.skillora_platform.assignment.service;
 
 import java.time.LocalDateTime;
+import java.util.Set;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -8,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import com.example.skillora_platform.assignment.dto.AssignmentSubmissionResponse;
 import com.example.skillora_platform.assignment.dto.AssignmentSubmitRequest;
@@ -38,8 +43,9 @@ public class AssignmentSubmissionService {
     private final CoursePermissionService permissionService;
     private final LessonService lessonService;
     private final LearningAccessService learningAccessService;
+    private final EntityManager entityManager;
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public AssignmentSubmissionResponse submit(Long assignmentId, AssignmentSubmitRequest request, String actorEmail) {
         User actor = permissionService.requireActor(actorEmail);
         Assignment assignment = assignmentService.findAssignmentWithLesson(assignmentId);
@@ -49,6 +55,11 @@ public class AssignmentSubmissionService {
         }
         Enrollment enrollment = learningAccessService.getActiveEnrollment(actor.getId(), course.getId());
         if (enrollment == null) {
+            throw new BusinessException("Enrollment required to submit this assignment", HttpStatus.FORBIDDEN);
+        }
+        entityManager.refresh(enrollment, LockModeType.PESSIMISTIC_WRITE);
+        if (enrollment.getStatus() != com.example.skillora_platform.enrollment.entity.EnrollmentStatus.ACTIVE
+                && enrollment.getStatus() != com.example.skillora_platform.enrollment.entity.EnrollmentStatus.COMPLETED) {
             throw new BusinessException("Enrollment required to submit this assignment", HttpStatus.FORBIDDEN);
         }
 
@@ -109,6 +120,7 @@ public class AssignmentSubmissionService {
                 .content(submission.getContent())
                 .fileUrl(submission.getFileUrl())
                 .score(submission.getScore())
+                .passed(submission.getPassed())
                 .feedback(submission.getFeedback())
                 .status(submission.getStatus())
                 .submittedAt(submission.getSubmittedAt())
@@ -134,6 +146,7 @@ public class AssignmentSubmissionService {
         submission.setStatus(SubmissionStatus.SUBMITTED);
         submission.setSubmittedAt(LocalDateTime.now());
         submission.setScore(null);
+        submission.setPassed(null);
         submission.setFeedback(null);
         submission.setGradedAt(null);
         submission.setGradedBy(null);
@@ -145,6 +158,11 @@ public class AssignmentSubmissionService {
             return null;
         }
         return enrollment.getEnrolledAt().plusDays(assignment.getDueDays());
+    }
+
+    @Transactional(readOnly = true)
+    public Set<Long> passedLessonIds(Long enrollmentId) {
+        return assignmentSubmissionRepository.findPassedLessonIds(enrollmentId);
     }
 
     private boolean isLate(LocalDateTime submittedAt, LocalDateTime dueAt) {
