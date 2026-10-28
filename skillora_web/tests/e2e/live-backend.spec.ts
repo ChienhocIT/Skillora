@@ -414,18 +414,22 @@ test.describe("live backend UAT release gate", () => {
       await expect(page.getByText("Submission Recorded", { exact: true })).toBeVisible();
     }
 
+    const learner = await api<{ id: number }>(page, "GET", "/auth/me");
+    const courseReviews = await api<PageData<{ userId: number }>>(
+      page, "GET", `/reviews?courseId=${seedCourse.id}&page=0&size=10`,
+    );
+    const hasReview = courseReviews.content.some((review) => review.userId === learner.id);
     await page.goto(`/courses/${seedCourse.id}`);
     await expect(page.getByRole("heading", { name: "Spring Boot Production APIs" })).toBeVisible();
     const writeReview = page.getByRole("button", { name: "Write a review" });
-    if (await writeReview.isVisible().catch(() => false)) {
+    if (!hasReview) {
       await writeReview.click();
     }
     const feedback = page.getByLabel("Written feedback (optional)");
-    if (await feedback.isVisible().catch(() => false)) {
-      await feedback.fill(`Live UAT review ${runId}`);
-      await page.getByRole("button", { name: /Submit Review|Save Review/ }).click();
-      await expect(page.getByText(/review/i).first()).toBeVisible();
-    }
+    await expect(feedback).toBeVisible();
+    await feedback.fill(`Live UAT review ${runId}`);
+    await page.getByRole("button", { name: /Submit Review|Save Review/ }).click();
+    await expect(page.getByText(/Review (submitted|updated) successfully/)).toBeVisible();
     const likeButton = page.getByRole("button", { name: /Like|Liked/ }).first();
     if (await likeButton.isVisible().catch(() => false)) {
       await likeButton.click();
