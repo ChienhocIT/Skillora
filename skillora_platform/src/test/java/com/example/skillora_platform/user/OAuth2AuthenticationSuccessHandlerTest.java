@@ -70,13 +70,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
-    @AfterEach
-    void clearLoginCodes() {
-        loginCodeRepository.deleteAll();
-    }
-
     @BeforeEach
-    void setUp() {
+    @AfterEach
+    void cleanDatabase() {
         loginCodeRepository.deleteAll();
         auditLogRepository.deleteAll();
         notificationRepository.deleteAll();

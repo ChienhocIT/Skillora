@@ -19,6 +19,8 @@ Image frontend đã kiểm chứng: `sha256:a52c2ffa9bce57ad4fcb463d29f8a8622c79
 
 Log/screenshot/JSON đầy đủ giữ tại `artifacts/ui-20261029/` trên máy local; thư mục này được ignore để không đưa môi trường, DB và artifact lớn vào Git. Hướng dẫn chạy/rollback: [UI_REDESIGN.md](UI_REDESIGN.md). Gói Docker offline `ade2c0e` khoảng 509 MB đã qua cold start với DB mới và migration V1–V6, nhưng chưa chứa UI mới.
 
+CI đầu tiên của PR #1 ở commit `cb52bb8` đạt frontend nhưng lỗi 22 admin test ở bước setup: dữ liệu user/profile do OAuth test tạo còn lại trong H2 dùng chung theo thứ tự chạy Linux. Đã sửa OAuth test để dọn đầy đủ login code, token, profile và user trước/sau mỗi case, thay vì teardown chỉ xóa login code. Không thay runtime, không tắt ràng buộc khóa ngoại hoặc skip test. Kết quả CI của commit sửa phải được kiểm tra tại [PR #1](https://github.com/ChienhocIT/Skillora/pull/1); không dùng lượt local trước đó để coi CI thất bại là đã đạt.
+
 ## Các cổng vẫn mở
 
 - CI remote của commit PR và review độc lập; tạo PR không tự xác nhận các check đã đạt.
