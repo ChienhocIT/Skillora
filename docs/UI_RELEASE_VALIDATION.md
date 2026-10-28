@@ -21,6 +21,8 @@ Log/screenshot/JSON đầy đủ giữ tại `artifacts/ui-20261029/` trên máy
 
 CI đầu tiên của PR #1 ở commit `cb52bb8` đạt frontend nhưng lỗi 22 admin test ở bước setup: dữ liệu user/profile do OAuth test tạo còn lại trong H2 dùng chung theo thứ tự chạy Linux. Đã sửa OAuth test để dọn đầy đủ login code, token, profile và user trước/sau mỗi case, thay vì teardown chỉ xóa login code. Không thay runtime, không tắt ràng buộc khóa ngoại hoặc skip test. Kết quả CI của commit sửa phải được kiểm tra tại [PR #1](https://github.com/ChienhocIT/Skillora/pull/1); không dùng lượt local trước đó để coi CI thất bại là đã đạt.
 
+CI `2c9c5cf` sau sửa cleanup đã đạt cả hai job. Verify local kế tiếp phát hiện case nộp assignment trễ phụ thuộc ranh giới timestamp khi nộp ngay sau enrollment có hạn 0 ngày. Fixture đã được đặt enrolledAt lùi một ngày để kiểm tra trạng thái trễ rõ ràng trên cả H2/MySQL; không thay nghiệp vụ hoặc nới assertion. Xem check trên HEAD mới nhất của PR để xác nhận toàn bộ sửa test đã đạt.
+
 ## Các cổng vẫn mở
 
 - CI remote của commit PR và review độc lập; tạo PR không tự xác nhận các check đã đạt.

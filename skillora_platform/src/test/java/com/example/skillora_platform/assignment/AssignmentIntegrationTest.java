@@ -1,5 +1,6 @@
 package com.example.skillora_platform.assignment;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -221,6 +222,11 @@ class AssignmentIntegrationTest {
                 .andExpect(status().isForbidden());
 
         enroll(setup.courseId(), studentToken);
+
+        // Keep the zero-day deadline clearly in the past across database timestamp precision.
+        var enrollment = enrollmentRepository.findByUserIdAndCourseId(student.getId(), setup.courseId()).orElseThrow();
+        enrollment.setEnrolledAt(LocalDateTime.now().minusDays(1));
+        enrollmentRepository.saveAndFlush(enrollment);
 
         mockMvc.perform(post("/api/v1/assignments/{id}/submit", assignmentId)
                         .header("Authorization", bearer(studentToken))
