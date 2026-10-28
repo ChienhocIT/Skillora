@@ -1,28 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ACCESS_COOKIE, REFRESH_COOKIE, applyAuthCookies, clearAuth, type AuthPayload } from "@/lib/server-auth";
 
 const API_BASE_URL =
   process.env.API_BASE_URL?.replace(/\/$/, "") ??
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
   "http://localhost:8080";
-
-const ACCESS_COOKIE = "skillora_access_token";
-const REFRESH_COOKIE = "skillora_refresh_token";
-const USER_COOKIE = "skillora_user";
-
-type AuthPayload = {
-  success?: boolean;
-  data?: {
-    accessToken?: string;
-    refreshToken?: string;
-    expiresIn?: number;
-    user?: unknown;
-  };
-};
-
-type CookieUser = {
-  id?: number;
-  roles?: string[];
-};
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
@@ -45,48 +27,6 @@ function jsonError(message: string, status: number, errors?: string[]) {
     } satisfies ErrorPayload,
     { status },
   );
-}
-
-function cookieOptions(maxAge?: number) {
-  return {
-    httpOnly: true,
-    sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge,
-  };
-}
-
-function clearAuth(response: NextResponse) {
-  response.cookies.set(ACCESS_COOKIE, "", cookieOptions(0));
-  response.cookies.set(REFRESH_COOKIE, "", cookieOptions(0));
-  response.cookies.set(USER_COOKIE, "", cookieOptions(0));
-}
-
-function serializeUserForCookie(user: unknown) {
-  if (!user || typeof user !== "object") {
-    return null;
-  }
-  const value = user as CookieUser;
-  return {
-    id: value.id,
-    roles: Array.isArray(value.roles) ? value.roles : [],
-  };
-}
-
-function applyAuthCookies(response: NextResponse, payload: AuthPayload) {
-  const auth = payload.data;
-  if (!auth?.accessToken || !auth.refreshToken) {
-    return;
-  }
-  response.cookies.set(ACCESS_COOKIE, auth.accessToken, cookieOptions(auth.expiresIn ?? 900));
-  response.cookies.set(REFRESH_COOKIE, auth.refreshToken, cookieOptions(60 * 60 * 24 * 30));
-  if (auth.user) {
-    const cookieUser = serializeUserForCookie(auth.user);
-    if (cookieUser) {
-      response.cookies.set(USER_COOKIE, encodeURIComponent(JSON.stringify(cookieUser)), cookieOptions(60 * 60 * 24 * 30));
-    }
-  }
 }
 
 async function readBody(request: NextRequest) {
@@ -112,29 +52,36 @@ function parseJson<T>(text: string): T | null {
   }
 }
 
-async function refreshAccessToken(request: NextRequest) {
-  const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
-  if (!refreshToken) {
-    return null;
-  }
+// Share rotation across concurrent requests and their shortly delayed responses in this process.
+const refreshes = new Map<string, Promise<AuthPayload | null>>();
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-      cache: "no-store",
-    });
+async function refreshAccessToken(refreshToken: string) {
+  const existing = refreshes.get(refreshToken);
+  if (existing) return existing;
+  if (refreshes.size >= 1000) throw new Error("Refresh capacity reached");
 
-    const text = await response.text();
-    if (!response.ok) {
-      return null;
+  const pending = (async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (response.status === 401 || response.status === 403) return null;
+      if (!response.ok) throw new Error("Refresh service unavailable");
+      const payload = parseJson<AuthPayload>(await response.text());
+      if (!payload?.data?.accessToken || !payload.data.refreshToken || payload.success === false) {
+        throw new Error("Invalid refresh response");
+      }
+      return payload;
+    } finally {
+      setTimeout(() => refreshes.delete(refreshToken), 5000).unref();
     }
-
-    return parseJson<AuthPayload>(text);
-  } catch {
-    return null;
-  }
+  })();
+  refreshes.set(refreshToken, pending);
+  return pending;
 }
 
 async function forward(request: NextRequest, path: string[], accessToken?: string, body?: BodyInit) {
@@ -175,21 +122,27 @@ async function handler(request: NextRequest, context: RouteContext) {
   try {
     upstream = await forward(request, path, accessToken, body);
   } catch {
-    return jsonError("Backend service is unavailable. Please try again later.", 503);
+    const response = jsonError("Backend service is unavailable. Please try again later.", 503);
+    if (last === "auth/logout") clearAuth(response);
+    return response;
   }
   let refreshed: AuthPayload | null = null;
   let refreshAttempted = false;
 
-  if (upstream.status === 401 && accessToken) {
+  if (upstream.status === 401 && refreshToken && (last === "auth/me" || !last.startsWith("auth/"))) {
     refreshAttempted = true;
-    refreshed = await refreshAccessToken(request);
+    try {
+      refreshed = await refreshAccessToken(refreshToken);
+    } catch {
+      return jsonError("Session refresh is temporarily unavailable. Please try again later.", 503);
+    }
     accessToken = refreshed?.data?.accessToken;
     if (accessToken) {
       try {
         upstream = await forward(request, path, accessToken, body);
       } catch {
         const response = jsonError("Backend service is unavailable. Please try again later.", 503);
-        clearAuth(response);
+        applyAuthCookies(response, refreshed!);
         return response;
       }
     }

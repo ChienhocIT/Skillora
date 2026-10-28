@@ -72,6 +72,13 @@ public class QuizAttempt {
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
+    @Column(name = "deadline_at")
+    private LocalDateTime deadlineAt;
+
+    public boolean isExpired() {
+        return submittedAt == null && deadlineAt != null && !LocalDateTime.now().isBefore(deadlineAt);
+    }
+
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 

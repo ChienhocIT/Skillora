@@ -1,0 +1,141 @@
+{
+  "audit_date": "2026-10-28",
+  "started_date": "2026-10-27",
+  "timezone": "Asia/Saigon",
+  "repository": "ChienhocIT/Skillora",
+  "branch": "main",
+  "head": "825469b44ac88852dcdd807a1ec5f87047f20295",
+  "baseline": "29fe9cc6b32a483d090840cde52e464bab0106c8",
+  "summary": {
+    "total_files": 156,
+    "reviewed_files": 85,
+    "skipped_files": 71,
+    "coverage_rate": 54.49,
+    "ocr_total_files": 181,
+    "ocr_excluded_files": 25,
+    "definition": "total_files is OCR reviewable files; excluded files are separate. Coverage is manual file review, not code/test coverage."
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "path": "skillora_web/src/app/api/backend/[...path]/route.ts",
+      "content": "Phiên đăng nhập mất sau khi access cookie hết hạn\n**Vị trí:** `skillora_web/src/app/api/backend/[...path]/route.ts:85,185-186,238-239` — `bug`, thuộc range.\n\nAccess cookie dùng `maxAge=expiresIn` (mặc định 900 giây). Khi trình duyệt loại cookie đó nhưng refresh cookie vẫn hợp lệ, upstream trả 401; điều kiện `upstream.status === 401 && accessToken` bỏ qua refresh và `clearAuth` xóa cả refresh cookie. Người dùng phải đăng nhập lại sau khoảng 15 phút dù refresh token có hạn 7 ngày.\n\n**Đã tái hiện:** chạy route handler thực qua TypeScript transpilation với `NextRequest` thực và `fetch` giả. Chỉ gửi refresh/user cookie: nhận 401, không có request `/auth/refresh`, refresh cookie bị xóa. Không gọi backend/provider thật. Sửa điều kiện theo refresh token; bao phủ access cookie thiếu, token hết hạn và refresh token vô hiệu.",
+      "start_line": 185,
+      "end_line": 186,
+      "category": "bug",
+      "severity": "high",
+      "scope": "range",
+      "validation": "Reproduced with real route handler and NextRequest, mocked fetch."
+    },
+    {
+      "id": "F02",
+      "path": ".github/workflows/backend-ci.yml",
+      "content": "Workflow và Playwright cùng quản lý server cổng 3000\n**Vị trí:** `.github/workflows/backend-ci.yml:91-101`, `skillora_web/playwright.config.ts:22-25` — `test`, thuộc range.\n\nWorkflow mở standalone server rồi gọi mock E2E. Playwright có `webServer` cùng URL và `reuseExistingServer: false`, nên dừng trước khi chạy test. Sửa lint xong pipeline vẫn chưa qua E2E.\n\n**Đã tái hiện:** mở HTTP fixture trên loopback cổng 3000, chạy Playwright với `CI=true`: exit 1, `http://127.0.0.1:3000 is already used`. Fixture được đóng sau probe. Chọn một nơi quản lý server; nếu kiểm thử production build thì giữ standalone server và cấu hình Playwright tương ứng.",
+      "start_line": 91,
+      "end_line": 101,
+      "category": "test",
+      "severity": "high",
+      "scope": "range",
+      "validation": "Reproduced with local occupied-port HTTP fixture and Playwright CI=true."
+    },
+    {
+      "id": "F03",
+      "path": "skillora_platform/docker-compose.yml",
+      "content": "Compose không truyền cấu hình provider cần thiết\n**Vị trí:** `skillora_platform/docker-compose.yml:63-69`, đối chiếu `src/main/resources/application.yml` — `bug`, baseline triển khai chưa được cập nhật theo code mới.\n\nCompose chỉ truyền Bunny library/API key; không truyền `BUNNY_WEBHOOK_SIGNING_SECRET` hoặc `BUNNY_TOKEN_SECURITY_KEY`. Không có `env_file` hay secret mount bổ sung trong cấu hình đã commit. Lệnh `--env-file .env.prod` không tự đưa mọi biến trong file vào container. Dù điền secret vào env file, webhook vẫn không được cấu hình và signed embed mặc định trả null. `VNPAY_URL`, `MOMO_ENDPOINT`, `PAYMENT_ENABLED` cũng không được truyền; override trong env file không có hiệu lực và endpoint giữ mặc định sandbox.\n\n**Kiểm chứng:** đối chiếu các lớp Compose với application bindings; chưa gọi provider thật. Truyền rõ biến cần dùng và kiểm tra cấu hình container bằng giá trị giả trước sandbox UAT.",
+      "start_line": 63,
+      "end_line": 69,
+      "category": "bug",
+      "severity": "high",
+      "scope": "baseline",
+      "validation": "Static comparison of all Compose layers with application bindings."
+    },
+    {
+      "id": "F04",
+      "path": "skillora_platform/docker-compose.prod.yml",
+      "content": "Staging/prod tham chiếu Nginx config không có trong checkout\n**Vị trí:** `skillora_platform/docker-compose.prod.yml:61-63`; staging có mount tương tự — `bug`, baseline triển khai.\n\nCả hai override mount `./nginx/nginx.conf` nhưng repo không có file hoặc hướng dẫn tạo nó. Checkout mới không thể khởi động reverse proxy theo cấu hình đã commit. Chứng chỉ cũng cần quy trình provision; không đưa private key vào repo.\n\n**Kiểm chứng:** inventory Git/filesystem; không khởi động hoặc chỉnh Docker stack. Bổ sung Nginx template cho frontend, API, SSE cùng hướng dẫn TLS và health checks.",
+      "start_line": 61,
+      "end_line": 63,
+      "category": "bug",
+      "severity": "high",
+      "scope": "baseline",
+      "validation": "Git and filesystem inventory; no nginx config/template in checkout."
+    },
+    {
+      "id": "F05",
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/user/service/OAuth2AuthenticationSuccessHandler.java",
+      "content": "OAuth đưa access và refresh token vào query URL\n**Vị trí:** `skillora_platform/src/main/java/com/example/skillora_platform/user/service/OAuth2AuthenticationSuccessHandler.java:35-39` — `security`, baseline; tương ứng TD-016 đã ghi nhận trước đây.\n\nKhi bật Google OAuth, URL redirect chứa trực tiếp hai token, có thể lưu trong browser history và request/access logs. Frontend cũng chưa có route `/oauth2/redirect` để hoàn thành phiên cookie. Google OAuth chưa phải luồng end-to-end hoàn chỉnh.\n\n**Kiểm chứng:** callback và assertion trong test hiện tại; không gọi Google. Dùng mã ngắn hạn, dùng một lần, đổi token tại server và đặt httpOnly cookies. Test expiry/replay và frontend callback; URL không chứa bearer/refresh token.",
+      "start_line": 35,
+      "end_line": 39,
+      "category": "security",
+      "severity": "high",
+      "scope": "baseline",
+      "validation": "Source and existing test inspected; Google not called."
+    },
+    {
+      "id": "F06",
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/commerce/service/OrderService.java",
+      "content": "Payment settlement chưa bảo đảm idempotency khi callback đồng thời\n**Vị trí:** `skillora_platform/src/main/java/com/example/skillora_platform/commerce/service/OrderService.java:160-179` — `bug`, baseline.\n\nVNPay return/IPN và MoMo IPN có thể vào settlement. Code đọc order rồi kiểm tra trạng thái trước khi tạo enrollment, dùng coupon, phát event. Repository không lấy row lock; entity không có optimistic version. Hai transaction có thể cùng thấy PENDING. Unique enrollment chỉ chặn insert trùng bằng lỗi DB, không serialize toàn bộ settlement/coupon/event. Callback đồng thời có thể gặp constraint failure hoặc lặp side effect tùy lịch commit và enrollment đã có.\n\n**Mức kiểm chứng:** static review đường gọi và cơ chế transaction; **chưa tái hiện cạnh tranh trên MySQL**, không khẳng định đã quan sát mất tiền hay enrollment trùng. Test hiện tại chứng minh callback lặp tuần tự. Cần khóa hoặc chuyển trạng thái atomically tại ranh giới transaction, kèm MySQL concurrency regression.",
+      "start_line": 160,
+      "end_line": 179,
+      "category": "bug",
+      "severity": "high",
+      "scope": "baseline",
+      "validation": "Static transaction/race analysis only; concurrent MySQL reproduction pending."
+    },
+    {
+      "id": "F07",
+      "path": "skillora_web/src/features/instructor/course-builder.tsx",
+      "content": "Frontend lint đang chặn CI\n**Vị trí:** `skillora_web/src/features/instructor/course-builder.tsx:802-806` — `maintainability`, thuộc range; file chỉ review từng phần nên vẫn tính `skipped` trong coverage.\n\n`setAwaitingProcessing(false)` đồng bộ trong effect vi phạm `react-hooks/set-state-in-effect`. `npm run lint` exit 1 với đúng một lỗi tại dòng 804. Điều chỉnh state dẫn xuất hoặc callback tương ứng; giữ lint gate và kiểm tra READY/FAILED, kể cả upload lần hai.",
+      "start_line": 802,
+      "end_line": 806,
+      "category": "maintainability",
+      "severity": "medium",
+      "scope": "range-partial-file",
+      "validation": "npm run lint failed with one react-hooks/set-state-in-effect error."
+    },
+    {
+      "id": "F08",
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/user/OAuth2AuthenticationSuccessHandlerTest.java",
+      "content": "Test OAuth vẫn kỳ vọng callback cổng 5173\n**Vị trí:** `skillora_platform/src/test/java/com/example/skillora_platform/user/OAuth2AuthenticationSuccessHandlerTest.java:90-91` — `test`, baseline ngoài range.\n\nCấu hình mặc định dùng `localhost:3000`, test kỳ vọng `localhost:5173`. Full verify fail; test riêng bằng Java 17.0.17 cũng fail cùng assertion. Đặt redirect URI tường minh trong test theo contract mong muốn. Không đổi production về cổng cũ chỉ để làm xanh test.",
+      "start_line": 90,
+      "end_line": 91,
+      "category": "test",
+      "severity": "medium",
+      "scope": "baseline",
+      "validation": "Failed in full verify and isolated test on Java 17.0.17."
+    },
+    {
+      "id": "F09",
+      "path": "skillora_web/src/features/learner/notifications-page.tsx",
+      "content": "Frontend không nghe đúng tên sự kiện SSE\n**Vị trí:** `skillora_web/src/features/learner/notifications-page.tsx:28-35` — `bug`, thuộc range.\n\nBackend gửi `event: notification` trong `NotificationStreamService.send`, frontend chỉ gắn `onmessage`; named event không vào handler đó nên không invalidate query. Đóng EventSource trong `onerror` còn ngăn tự reconnect khi gián đoạn tạm thời. Nghe `notification`, cleanup listener và test notification cập nhật qua proxy, kể cả reconnect.",
+      "start_line": 28,
+      "end_line": 35,
+      "category": "bug",
+      "severity": "medium",
+      "scope": "range",
+      "validation": "Static frontend listener/backend named-event contract comparison."
+    },
+    {
+      "id": "F10",
+      "path": "skillora_web/src/features/learner/payment-result-page.tsx",
+      "content": "Thông báo thanh toán thành công tin query do người dùng sửa được\n**Vị trí:** `skillora_web/src/features/learner/payment-result-page.tsx:24-27,68-83` — `bug`, thuộc range.\n\n`?status=SUCCESS` đủ để hiện “Payment Successful” và “Your enrollment is confirmed”, kể cả order API đang PENDING, lỗi hoặc không có order ID. Order được fetch nhưng chỉ dùng status để bật retry. Query cũ cũng có thể tiếp tục hiện pending sau IPN thành công. Lấy kết quả chính từ order API; query chỉ là thông tin callback. Đây là lỗi hiển thị/xác nhận, **không phải bằng chứng vượt kiểm tra thanh toán backend**.",
+      "start_line": 24,
+      "end_line": 27,
+      "category": "bug",
+      "severity": "medium",
+      "scope": "range",
+      "validation": "Static UI state/data-flow comparison; not a backend payment bypass."
+    },
+    {
+      "id": "F11",
+      "path": ".github/workflows/backend-ci.yml",
+      "content": "Maven wrapper không có executable bit cho Ubuntu CI\n**Vị trí:** `.github/workflows/backend-ci.yml:38`, `skillora_platform/mvnw` — `bug`, workflow thuộc range, file mode thuộc baseline.\n\nBackend job chạy Ubuntu và gọi trực tiếp `./mvnw verify`, nhưng Git index lưu `mvnw` với mode `100644`. Workflow không có bước cấp quyền thực thi. Checkout Linux sạch sẽ gặp `Permission denied` trước khi chạy test. Dockerfile có `chmod +x mvnw` riêng nhưng không giúp job chạy ngoài Docker này.\n\n**Kiểm chứng:** `git ls-files --stage skillora_platform/mvnw` trả `100644`; đối chiếu toàn bộ backend job. Chưa chạy GitHub job thật. Commit executable bit (`100755`) hoặc gọi wrapper qua shell tường minh; kiểm chứng job Ubuntu từ checkout sạch.",
+      "start_line": 38,
+      "end_line": 38,
+      "category": "bug",
+      "severity": "high",
+      "scope": "range-and-baseline-mode",
+      "validation": "Git index mode 100644 and direct execution on Ubuntu CI; GitHub runtime not executed."
+    }
+  ]
+}

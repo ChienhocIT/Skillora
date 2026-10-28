@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { BookOpen, Clock, Star, Users, CheckCircle2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { StatusBadge } from "@/components/status-badge";
+import { CourseThumbnail } from "@/components/course-thumbnail";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -22,12 +22,12 @@ function StarRating({ rating, count }: { rating?: number | string | null; count?
     <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
       {!isNew ? (
         <>
-          <span className="font-bold text-amber-600 dark:text-amber-500">{display}</span>
+          <span className="font-bold text-amber-800 dark:text-amber-300">{display}</span>
           <span className="flex items-center">
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-3 w-3 ${
+                className={`h-3.5 w-3.5 ${
                   i < Math.round(num)
                     ? "fill-amber-500 text-amber-500"
                     : "text-muted-foreground/20"
@@ -36,11 +36,11 @@ function StarRating({ rating, count }: { rating?: number | string | null; count?
             ))}
           </span>
           {count !== undefined ? (
-            <span className="text-[10px] text-muted-foreground/80">({count.toLocaleString()})</span>
+            <span className="text-xs text-muted-foreground">({count.toLocaleString()})</span>
           ) : null}
         </>
       ) : (
-        <Badge variant="secondary" className="text-[9px] uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0 font-bold px-1.5 py-0">
+        <Badge variant="secondary" className="text-xs bg-accent text-primary border-0 font-bold px-1.5 py-0">
           New
         </Badge>
       )}
@@ -78,13 +78,13 @@ function QuickViewContent({ idOrSlug }: { idOrSlug: string | number }) {
       <div>
         <h4 className="font-bold text-sm text-foreground leading-snug">{course.title}</h4>
         {course.subtitle && (
-          <p className="text-muted-foreground/90 mt-1.5 text-[11px] leading-normal line-clamp-3">
+          <p className="text-muted-foreground mt-1.5 text-sm leading-normal line-clamp-3">
             {course.subtitle}
           </p>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-[10px]">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
         {course.level && (
           <Badge variant="secondary" className="bg-primary/10 text-primary border-0 font-medium px-1.5 py-0 hover:bg-primary/10">
             {course.level.replace("_", " ")}
@@ -110,9 +110,9 @@ function QuickViewContent({ idOrSlug }: { idOrSlug: string | number }) {
       )}
 
       {course.requirements && course.requirements.length > 0 && (
-        <div className="space-y-1 pt-1 border-t border-border/45 text-[11px]">
+        <div className="space-y-1 pt-1 border-t border-border/45 text-sm">
           <p className="font-semibold text-foreground">Requirements:</p>
-          <p className="text-muted-foreground/80 line-clamp-1">{course.requirements.join(", ")}</p>
+          <p className="text-muted-foreground line-clamp-1">{course.requirements.join(", ")}</p>
         </div>
       )}
     </div>
@@ -127,24 +127,11 @@ export function CourseCard({ course, priority = false }: { course: CourseSummary
   return (
     <HoverCard openDelay={500} closeDelay={100}>
       <HoverCardTrigger asChild>
-        <Card className="premium-card course-card group flex h-full overflow-hidden rounded-[--radius-card] border border-border/60 bg-card py-0 transition-all duration-300">
-          <Link href={href} className="flex h-full flex-col">
+        <Card className="course-card group flex h-full gap-0 rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
+          <Link href={href} className="flex h-full flex-col rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
             {/* Thumbnail */}
-            <div className="relative aspect-video overflow-hidden bg-muted">
-              {course.thumbnailUrl ? (
-                <Image
-                  src={course.thumbnailUrl}
-                  alt={course.title}
-                  fill
-                  priority={priority}
-                  sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
-                  className="course-card-image object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  <BookOpen className="h-8 w-8" />
-                </div>
-              )}
+            <div className="relative aspect-video overflow-hidden rounded-lg border border-border/60 bg-muted">
+              <CourseThumbnail src={course.thumbnailUrl} title={course.title} priority={priority} sizes="(min-width: 1280px) 340px, (min-width: 640px) 45vw, 100vw" className="course-card-image object-cover" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/25 to-transparent opacity-0 transition-opacity duration-300 md:group-hover:opacity-100" />
               {/* Status overlay for non-published */}
               {course.status && course.status !== "PUBLISHED" ? (
@@ -155,15 +142,15 @@ export function CourseCard({ course, priority = false }: { course: CourseSummary
             </div>
 
             {/* Content */}
-            <div className="flex flex-1 flex-col gap-2 p-4">
+            <div className="flex flex-1 flex-col gap-2 pt-3">
               {/* Title */}
-              <h3 className="line-clamp-2 min-h-[2.45rem] text-sm font-bold leading-snug tracking-tight text-foreground transition-colors duration-200 group-hover:text-primary">
+              <h3 className="line-clamp-2 min-h-[2.7rem] text-base font-bold leading-snug tracking-tight text-foreground transition-colors duration-200 group-hover:text-primary">
                 {course.title}
               </h3>
 
               {/* Instructor */}
               {course.instructorName ? (
-                <p className="truncate text-xs text-muted-foreground/80">
+                <p className="truncate text-sm text-muted-foreground">
                   {course.instructorName}
                 </p>
               ) : null}
@@ -172,37 +159,37 @@ export function CourseCard({ course, priority = false }: { course: CourseSummary
               <StarRating rating={course.avgRating} count={course.totalReviews} />
 
               {/* Meta row */}
-              <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground/75 mt-0.5">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
+                  <Clock className="h-3.5 w-3.5" />
                   {formatDuration(course.totalDurationSeconds)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <BookOpen className="h-3 w-3" />
+                  <BookOpen className="h-3.5 w-3.5" />
                   {course.totalLessons ?? 0} lessons
                 </span>
                 {(course.totalEnrollments ?? 0) > 0 ? (
                   <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
+                    <Users className="h-3.5 w-3.5" />
                     {(course.totalEnrollments ?? 0).toLocaleString()}
                   </span>
                 ) : null}
               </div>
 
               {/* Price + Level */}
-              <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/40 pt-3">
+              <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 pt-1">
                 <div className="flex items-baseline gap-2">
                   <span className="text-base font-extrabold text-foreground">
                     {formatMoney(price, course.currency)}
                   </span>
                   {hasDiscount ? (
-                    <span className="text-xs text-muted-foreground/60 line-through font-medium">
+                    <span className="text-sm text-muted-foreground line-through">
                       {formatMoney(course.price, course.currency)}
                     </span>
                   ) : null}
                 </div>
                 {course.level ? (
-                  <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-semibold bg-secondary/80 text-secondary-foreground border-0">
+                  <Badge variant="secondary" className="text-xs px-2 py-1 font-medium bg-secondary text-secondary-foreground border-0">
                     {course.level.replace("_", " ")}
                   </Badge>
                 ) : null}
@@ -216,7 +203,7 @@ export function CourseCard({ course, priority = false }: { course: CourseSummary
         side="right"
         align="start"
         sideOffset={12}
-        className="w-80 hidden md:block border border-border/80 bg-popover rounded-[--radius-card] shadow-2xl p-0 overflow-hidden"
+        className="w-80 hidden md:block border border-border/80 bg-popover rounded-[var(--radius-card)] shadow-2xl p-0 overflow-hidden"
       >
         <QuickViewContent idOrSlug={course.id} />
       </HoverCardContent>

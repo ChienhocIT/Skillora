@@ -1,0 +1,13 @@
+# Opt in only after configuring a Google OAuth client and HTTPS on the public origin.
+# Layer after docker-compose.yml and docker-compose.prod.yml (or staging.yml).
+services:
+  app:
+    environment:
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET is required}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: openid,profile,email
+      OAUTH2_AUTHORIZED_REDIRECT_URI: ${FRONTEND_URL:?FRONTEND_URL is required}/oauth2/redirect
+  frontend:
+    environment:
+      OAUTH_GOOGLE_ENABLED: "true"
+      PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:?PUBLIC_API_BASE_URL is required}

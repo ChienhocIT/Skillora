@@ -19,11 +19,13 @@
 | Complete | POST | `/api/v1/auth/register` | Public | - | Register STUDENT or INSTRUCTOR |
 | Complete | POST | `/api/v1/auth/login` | Public | - | Login and return JWT/refresh tokens |
 | Complete | POST | `/api/v1/auth/refresh` | Public | - | Rotate refresh token |
+| Implemented; local tests pass | POST | `/api/v1/auth/oauth2/exchange` | Opaque code + browser verifier | - | Redeem a two-minute single-use code; reject expiry/replay/wrong verifier |
 | Complete | POST | `/api/v1/auth/logout` | Public | - | Idempotently revoke refresh token |
 | Complete | POST | `/api/v1/auth/forgot-password` | Public | - | Request password reset; dev/test can expose token |
 | Complete | POST | `/api/v1/auth/reset-password` | Public | - | Reset password with token |
 | Complete | GET | `/api/v1/auth/me` | JWT | Any | Current user info |
 | Complete | GET | `/oauth2/authorization/google` | Public | - | Google OAuth2 login when configured |
+| Implemented; local tests pass | GET | `/oauth2/redirect` | Browser verifier cookie | - | Next server callback exchanges code, sets httpOnly session cookies and redirects without token query parameters |
 | Complete | GET | `/api/v1/profiles/me` | JWT | Any | Get current profile |
 | Complete | PUT | `/api/v1/profiles/me` | JWT | Any | Update current profile |
 | Complete | GET | `/api/v1/instructors/{id}` | Public | - | Public instructor profile |
@@ -65,7 +67,7 @@
 | Complete | GET | `/api/v1/enrollments/me` | JWT | Any | My enrollments |
 | Complete | GET | `/api/v1/enrollments/{id}/progress` | JWT | Owner | Lesson progress list |
 | Complete | PATCH | `/api/v1/enrollments/{id}/lessons/{lid}/progress` | JWT | Owner | Update lesson progress |
-| Complete | GET | `/api/v1/enrollments/{id}/certificate` | JWT | Owner | Get certificate |
+| Complete | GET | `/api/v1/enrollments/{id}/certificate` | JWT | Owner | Check current completion/assessment eligibility and revocation before certificate |
 | Complete | GET | `/api/v1/learning/dashboard` | JWT | Any | Learning dashboard |
 
 ## Quiz Module
@@ -75,7 +77,8 @@
 | Complete | POST | `/api/v1/quizzes` | JWT | INST/ADMIN | Create quiz with nested questions/options |
 | Complete | GET | `/api/v1/quizzes/{id}` | JWT | Enrolled/Owner/Admin | Get quiz |
 | Complete | PUT | `/api/v1/quizzes/{id}` | JWT | Owner/ADMIN | Replace quiz |
-| Complete | POST | `/api/v1/quizzes/{id}/submit` | JWT | STUDENT | Submit and auto-grade |
+| Complete | POST | `/api/v1/quizzes/{id}/attempts/start` | JWT | STUDENT | Start/resume owned attempt; server deadline/quota |
+| Complete | POST | `/api/v1/quizzes/{id}/submit` | JWT | STUDENT | Requires attemptId; deadline enforced, duplicate idempotent |
 | Complete | GET | `/api/v1/quizzes/{id}/attempts` | JWT | STUDENT | My attempts |
 
 ## Assignment Module
@@ -86,7 +89,7 @@
 | Complete | GET | `/api/v1/assignments/{id}` | JWT | Enrolled/Owner/Admin | Get assignment |
 | Complete | POST | `/api/v1/assignments/{id}/submit` | JWT | STUDENT | Submit or resubmit after return |
 | Complete | GET | `/api/v1/assignments/{id}/submissions` | JWT | INST/ADMIN | List submissions |
-| Complete | PATCH | `/api/v1/submissions/{id}/grade` | JWT | INST/ADMIN | Grade or return |
+| Complete | PATCH | `/api/v1/submissions/{id}/grade` | JWT | INST/ADMIN | Grade requires explicit passed boolean; return failed work for revision |
 
 ## Commerce & Payment Module
 

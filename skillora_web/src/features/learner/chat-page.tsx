@@ -483,7 +483,7 @@ function ChatBubble({
     <Message from={from} className={assistant ? "max-w-[760px]" : "max-w-[85%]"}>
       <MessageContent
         className={cn(
-          assistant && "rounded-[--radius-card] border bg-card px-4 py-3 shadow-sm",
+          assistant && "rounded-[var(--radius-card)] border bg-card px-4 py-3 shadow-sm",
         )}
       >
         {assistant ? (
@@ -538,7 +538,7 @@ function ChatComposer({
       </Suggestions>
       <PromptInput
         onSubmit={({ text }) => onSend(text)}
-        className="rounded-[--radius-card] border bg-background shadow-sm"
+        className="rounded-[var(--radius-card)] border bg-background shadow-sm"
       >
         <PromptInputTextarea
           disabled={disabled}

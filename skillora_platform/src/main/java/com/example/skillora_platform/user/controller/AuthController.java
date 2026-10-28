@@ -19,6 +19,7 @@ import com.example.skillora_platform.common.Constants;
 import com.example.skillora_platform.user.dto.AuthResponse;
 import com.example.skillora_platform.user.dto.ForgotPasswordRequest;
 import com.example.skillora_platform.user.dto.LoginRequest;
+import com.example.skillora_platform.user.dto.OAuthExchangeRequest;
 import com.example.skillora_platform.user.dto.LogoutRequest;
 import com.example.skillora_platform.user.dto.PasswordResetTokenResponse;
 import com.example.skillora_platform.user.dto.RegisterRequest;
@@ -26,6 +27,7 @@ import com.example.skillora_platform.user.dto.ResetPasswordRequest;
 import com.example.skillora_platform.user.dto.TokenRefreshRequest;
 import com.example.skillora_platform.user.dto.UserResponse;
 import com.example.skillora_platform.user.service.AuthService;
+import com.example.skillora_platform.user.service.OAuthLoginCodeService;
 import com.example.skillora_platform.user.service.PasswordResetService;
 
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,16 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final OAuthLoginCodeService loginCodeService;
+
+    @PostMapping("/oauth2/exchange")
+    public ApiResponse<AuthResponse> exchangeOAuthCode(
+            @Valid @RequestBody OAuthExchangeRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return ApiResponse.success("Login successful",
+                loginCodeService.exchange(request.getCode(), request.getVerifier(), httpRequest));
+    }
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(

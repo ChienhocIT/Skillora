@@ -21,6 +21,7 @@ services:
         limits:
           memory: 768M
     environment:
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
       SPRING_PROFILES_ACTIVE: staging
       DB_HOST: ${STAGING_DB_HOST:?STAGING_DB_HOST is required}
       DB_PORT: ${STAGING_DB_PORT:-3306}
@@ -38,11 +39,11 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:?MAIL_PASSWORD is required}
       MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
       MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_SMTP_STARTTLS_ENABLE:-true}
-      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:?VNPAY_TMN_CODE is required}
-      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:?VNPAY_HASH_SECRET is required}
-      MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:?MOMO_PARTNER_CODE is required}
-      MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:?MOMO_ACCESS_KEY is required}
-      MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:?MOMO_SECRET_KEY is required}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
+      MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-}
+      MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-}
+      MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:-}
       PAYMENT_IPN_WHITELIST_ENABLED: ${PAYMENT_IPN_WHITELIST_ENABLED:-false}
       VNPAY_IPN_ALLOWED_IPS: ${VNPAY_IPN_ALLOWED_IPS:-}
       MOMO_IPN_ALLOWED_IPS: ${MOMO_IPN_ALLOWED_IPS:-}
@@ -63,7 +64,10 @@ services:
     build:
       context: ../skillora_web
       dockerfile: Dockerfile
-    container_name: skillora-frontend
+      args:
+        NEXT_PUBLIC_APP_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
+        NEXT_PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:?PUBLIC_API_BASE_URL is required}
+    container_name: ${SKILLORA_CONTAINER_PREFIX:-skillora}-frontend
     environment:
       API_BASE_URL: http://app:8080
       NEXT_PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:?PUBLIC_API_BASE_URL is required}
@@ -76,7 +80,7 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: skillora-nginx
+    container_name: ${SKILLORA_CONTAINER_PREFIX:-skillora}-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -90,7 +94,7 @@ services:
 
   mailpit:
     image: axllent/mailpit:latest
-    container_name: skillora-mailpit
+    container_name: ${SKILLORA_CONTAINER_PREFIX:-skillora}-mailpit
     ports:
       - "8025:8025"
       - "1025:1025"

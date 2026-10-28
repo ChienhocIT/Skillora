@@ -27,13 +27,14 @@ export function NotificationsPage() {
 
   React.useEffect(() => {
     const source = new EventSource(notificationApi.streamUrl());
-    source.onmessage = () => {
+    const onNotification = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notificationsRoot });
     };
-    source.onerror = () => {
+    source.addEventListener("notification", onNotification);
+    return () => {
+      source.removeEventListener("notification", onNotification);
       source.close();
     };
-    return () => source.close();
   }, [queryClient]);
 
   const markRead = useMutation({
@@ -128,7 +129,7 @@ export function NotificationsPage() {
                       </Badge>
                     ) : null}
                   </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.message}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.content ?? item.message}</p>
                   {item.linkUrl ? (
                     <a
                       href={item.linkUrl}

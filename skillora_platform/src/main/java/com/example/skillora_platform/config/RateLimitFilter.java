@@ -90,6 +90,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private boolean isAuthWrite(String path) {
         return path.equals(Constants.AUTH_API_PREFIX + "/register")
+                || path.equals(Constants.AUTH_API_PREFIX + "/oauth2/exchange")
                 || path.equals(Constants.AUTH_API_PREFIX + "/login")
                 || path.equals(Constants.AUTH_API_PREFIX + "/refresh")
                 || path.equals(Constants.AUTH_API_PREFIX + "/forgot-password")

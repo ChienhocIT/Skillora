@@ -21,18 +21,19 @@ export function PaymentResultPage() {
   const params = useSearchParams();
   const orderId = params.get("orderId");
   const gateway = params.get("gateway");
-  const status = (params.get("status") ?? "").toUpperCase();
   const code = params.get("code");
-  const paid = status === "PAID" || status === "SUCCESS";
-  const failed = status === "FAILED" || status === "INVALID";
   const numericOrderId = orderId ? Number(orderId) : null;
-  const hasValidOrderId = typeof numericOrderId === "number" && Number.isFinite(numericOrderId);
+  const hasValidOrderId = typeof numericOrderId === "number" && Number.isSafeInteger(numericOrderId) && numericOrderId > 0;
 
   const order = useQuery({
     queryKey: queryKeys.order(numericOrderId),
     queryFn: () => commerceApi.getOrder(numericOrderId!),
     enabled: hasValidOrderId,
+    refetchInterval: (query) => query.state.data?.status === "PENDING" ? 3000 : false,
   });
+
+  const paid = order.data?.status === "PAID";
+  const failed = order.data?.status === "FAILED" || order.data?.status === "CANCELLED";
 
   const retry = useMutation({
     mutationFn: (selectedGateway: "vnpay" | "momo") =>

@@ -91,13 +91,23 @@ export function GradingPage() {
   });
 
   const grade = useMutation({
-    mutationFn: ({ id, score, feedback }: { id: number; score: number; feedback: string }) =>
-      instructorApi.gradeSubmission(id, { status: "GRADED", score, feedback }),
+    mutationFn: ({ id, score, passed, feedback }: { id: number; score: number; passed: boolean; feedback: string }) =>
+      instructorApi.gradeSubmission(id, { status: "GRADED", score, passed, feedback }),
     onSuccess: () => {
-      toast.success("Submission graded and returned");
+      toast.success("Submission graded");
       queryClient.invalidateQueries({
         queryKey: ["assignment-submissions", assignmentIdNum],
       });
+    },
+    onError: (error) => toast.error((error as Error).message),
+  });
+
+  const returnForRevision = useMutation({
+    mutationFn: ({ id, feedback }: { id: number; feedback: string }) =>
+      instructorApi.gradeSubmission(id, { status: "RETURNED", feedback }),
+    onSuccess: () => {
+      toast.success("Submission returned for revision");
+      queryClient.invalidateQueries({ queryKey: ["assignment-submissions", assignmentIdNum] });
     },
     onError: (error) => toast.error((error as Error).message),
   });
@@ -246,10 +256,11 @@ export function GradingPage() {
                   <SubmissionGradeRow
                     key={sub.id}
                     submission={sub}
-                    onGrade={(score, feedback) =>
-                      grade.mutate({ id: sub.id, score, feedback })
+                    onGrade={(score, feedback, passed) =>
+                      grade.mutate({ id: sub.id, score, feedback, passed })
                     }
-                    isSubmitting={grade.isPending}
+                    onReturn={(feedback) => returnForRevision.mutate({ id: sub.id, feedback })}
+                    isSubmitting={grade.isPending || returnForRevision.isPending}
                   />
                 ))}
               </TableBody>
@@ -279,14 +290,17 @@ export function GradingPage() {
 function SubmissionGradeRow({
   submission,
   onGrade,
+  onReturn,
   isSubmitting,
 }: {
   submission: AssignmentSubmission;
-  onGrade: (score: number, feedback: string) => void;
+  onGrade: (score: number, feedback: string, passed: boolean) => void;
+  onReturn: (feedback: string) => void;
   isSubmitting: boolean;
 }) {
   const [score, setScore] = React.useState(String(submission.score ?? ""));
   const [feedback, setFeedback] = React.useState(submission.feedback ?? "");
+  const [decision, setDecision] = React.useState(submission.passed == null ? "unset" : submission.passed ? "pass" : "fail");
 
   return (
     <TableRow>
@@ -313,6 +327,16 @@ function SubmissionGradeRow({
       </TableCell>
       <TableCell>
         <div className="grid gap-2 py-2">
+          <Select value={decision} onValueChange={setDecision}>
+            <SelectTrigger aria-label={`Pass decision for ${submission.studentName ?? submission.userId}`}>
+              <SelectValue placeholder="Choose pass or fail" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unset">Choose pass or fail</SelectItem>
+              <SelectItem value="pass">Pass</SelectItem>
+              <SelectItem value="fail">Fail</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="flex gap-2">
             <div className="grid gap-1 flex-1">
               <Label className="text-[10px] text-muted-foreground">Score</Label>
@@ -337,13 +361,18 @@ function SubmissionGradeRow({
           </div>
           <Button
             size="sm"
-            onClick={() => onGrade(Number(score), feedback)}
-            disabled={!score || isSubmitting}
+            onClick={() => onGrade(Number(score), feedback, decision === "pass")}
+            disabled={!score || decision === "unset" || isSubmitting}
             className="w-full h-8"
           >
             <Send className="mr-1.5 h-3.5 w-3.5" />
             Grade
           </Button>
+          {submission.status !== "RETURNED" && submission.passed !== true ? (
+            <Button size="sm" variant="outline" onClick={() => onReturn(feedback)} disabled={!feedback.trim() || isSubmitting}>
+              Return for revision
+            </Button>
+          ) : null}
         </div>
       </TableCell>
     </TableRow>

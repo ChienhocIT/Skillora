@@ -7,6 +7,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 
 import com.example.skillora_platform.assignment.dto.AssignmentGradeRequest;
 import com.example.skillora_platform.assignment.dto.AssignmentSubmissionResponse;
@@ -14,8 +18,6 @@ import com.example.skillora_platform.assignment.entity.AssignmentSubmission;
 import com.example.skillora_platform.assignment.entity.SubmissionStatus;
 import com.example.skillora_platform.assignment.repository.AssignmentSubmissionRepository;
 import com.example.skillora_platform.course.service.CoursePermissionService;
-import com.example.skillora_platform.enrollment.entity.Enrollment;
-import com.example.skillora_platform.enrollment.entity.EnrollmentStatus;
 import com.example.skillora_platform.enrollment.service.LearningProgressService;
 import com.example.skillora_platform.exception.BusinessException;
 import com.example.skillora_platform.exception.ResourceNotFoundException;
@@ -36,8 +38,9 @@ public class AssignmentGradingService {
     private final LearningProgressService learningProgressService;
     private final AssignmentSubmissionService assignmentSubmissionService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityManager entityManager;
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public AssignmentSubmissionResponse grade(Long submissionId, AssignmentGradeRequest request, String actorEmail) {
         User actor = permissionService.requireInstructorOrAdmin(actorEmail);
         AssignmentSubmission submission = assignmentSubmissionRepository.findByIdWithDetails(submissionId)
@@ -46,7 +49,8 @@ public class AssignmentGradingService {
         permissionService.requireOwnerOrAdmin(
                 submission.getAssignment().getLesson().getSection().getCourse(), actor);
 
-        SubmissionStatus previousStatus = submission.getStatus();
+        entityManager.refresh(submission.getEnrollment(), LockModeType.PESSIMISTIC_WRITE);
+        entityManager.refresh(submission, LockModeType.PESSIMISTIC_WRITE);
         if (request.getStatus() == SubmissionStatus.GRADED) {
             applyGraded(submission, request, actor);
         } else if (request.getStatus() == SubmissionStatus.RETURNED) {
@@ -56,9 +60,9 @@ public class AssignmentGradingService {
         }
 
         AssignmentSubmission savedSubmission = assignmentSubmissionRepository.save(submission);
-        if (previousStatus != SubmissionStatus.GRADED && savedSubmission.getStatus() == SubmissionStatus.GRADED) {
-            completeAssignmentLesson(savedSubmission);
-        }
+        learningProgressService.updateAssessmentProgress(savedSubmission.getEnrollment().getId(),
+                savedSubmission.getAssignment().getLesson().getId(),
+                savedSubmission.getStatus() == SubmissionStatus.GRADED && Boolean.TRUE.equals(savedSubmission.getPassed()));
         publishNotificationEvent(savedSubmission);
 
         log.info("Instructor {} updated assignment submission {} to {}",
@@ -79,6 +83,9 @@ public class AssignmentGradingService {
             AssignmentGradeRequest request,
             User grader
     ) {
+        if (request.getPassed() == null) {
+            throw new BusinessException("Instructor must explicitly mark the assignment passed or failed", HttpStatus.BAD_REQUEST);
+        }
         if (request.getScore() == null) {
             throw new BusinessException("Score is required when grading a submission", HttpStatus.BAD_REQUEST);
         }
@@ -89,6 +96,7 @@ public class AssignmentGradingService {
 
         submission.setStatus(SubmissionStatus.GRADED);
         submission.setScore(request.getScore());
+        submission.setPassed(request.getPassed());
         submission.setFeedback(trimToNull(request.getFeedback()));
         submission.setGradedAt(LocalDateTime.now());
         submission.setGradedBy(grader);
@@ -99,8 +107,8 @@ public class AssignmentGradingService {
             AssignmentGradeRequest request,
             User grader
     ) {
-        if (submission.getStatus() == SubmissionStatus.GRADED) {
-            throw new BusinessException("Graded submissions cannot be returned", HttpStatus.CONFLICT);
+        if (submission.getStatus() == SubmissionStatus.GRADED && Boolean.TRUE.equals(submission.getPassed())) {
+            throw new BusinessException("Passed submissions cannot be returned", HttpStatus.CONFLICT);
         }
         String feedback = trimToNull(request.getFeedback());
         if (feedback == null) {
@@ -109,21 +117,10 @@ public class AssignmentGradingService {
 
         submission.setStatus(SubmissionStatus.RETURNED);
         submission.setScore(null);
+        submission.setPassed(null);
         submission.setFeedback(feedback);
         submission.setGradedAt(LocalDateTime.now());
         submission.setGradedBy(grader);
-    }
-
-    private void completeAssignmentLesson(AssignmentSubmission submission) {
-        Enrollment enrollment = submission.getEnrollment();
-        if (enrollment.getStatus() == EnrollmentStatus.ACTIVE) {
-            learningProgressService.updateProgress(
-                    enrollment.getId(),
-                    submission.getAssignment().getLesson().getId(),
-                    null,
-                    true
-            );
-        }
     }
 
     private String trimToNull(String value) {

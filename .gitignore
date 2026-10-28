@@ -1,0 +1,5 @@
+.env
+.env.docker.local
+artifacts/
+.vercel/
+.env.vercel.local

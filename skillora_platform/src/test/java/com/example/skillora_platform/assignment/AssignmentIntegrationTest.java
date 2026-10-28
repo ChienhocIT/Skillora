@@ -1,7 +1,14 @@
 package com.example.skillora_platform.assignment;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,8 +36,11 @@ import com.example.skillora_platform.course.repository.LessonResourceRepository;
 import com.example.skillora_platform.course.repository.LessonVideoRepository;
 import com.example.skillora_platform.course.repository.SectionRepository;
 import com.example.skillora_platform.enrollment.repository.CourseCertificateRepository;
+import com.example.skillora_platform.enrollment.entity.Enrollment;
+import com.example.skillora_platform.enrollment.entity.EnrollmentStatus;
 import com.example.skillora_platform.enrollment.repository.EnrollmentRepository;
 import com.example.skillora_platform.enrollment.repository.LessonProgressRepository;
+import com.example.skillora_platform.enrollment.service.LearningProgressService;
 import com.example.skillora_platform.notification.repository.NotificationRepository;
 import com.example.skillora_platform.user.entity.Role;
 import com.example.skillora_platform.user.entity.RoleName;
@@ -55,6 +65,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 class AssignmentIntegrationTest {
+    @Autowired private LearningProgressService learningProgressService;
 
     private static final String PASSWORD = "Password@123";
 
@@ -215,7 +226,17 @@ class AssignmentIntegrationTest {
                         .content(submissionJson("Non enrolled content")))
                 .andExpect(status().isForbidden());
 
-        enroll(setup.courseId(), studentToken);
+        // Keep the zero-day deadline clearly in the past across database timestamp precision.
+        var enrollment = enrollmentRepository.saveAndFlush(Enrollment.builder()
+                .user(student)
+                .course(courseRepository.findById(setup.courseId()).orElseThrow())
+                .status(EnrollmentStatus.ACTIVE)
+                .amountPaid(BigDecimal.ZERO)
+                .progressPercent(BigDecimal.ZERO)
+                .enrolledAt(LocalDateTime.now().minusDays(1))
+                .build());
+        assertThat(enrollmentRepository.findById(enrollment.getId()).orElseThrow().getEnrolledAt())
+                .isBefore(LocalDateTime.now().minusHours(12));
 
         mockMvc.perform(post("/api/v1/assignments/{id}/submit", assignmentId)
                         .header("Authorization", bearer(studentToken))
@@ -292,7 +313,7 @@ class AssignmentIntegrationTest {
                         .header("Authorization", bearer(otherInstructorToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "status": "GRADED", "score": 90, "feedback": "Good work." }
+                                { "status": "GRADED", "passed": true, "score": 90, "feedback": "Good work." }
                                 """))
                 .andExpect(status().isForbidden());
 
@@ -300,7 +321,7 @@ class AssignmentIntegrationTest {
                         .header("Authorization", bearer(instructorToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "status": "GRADED", "score": 101, "feedback": "Too high." }
+                                { "status": "GRADED", "passed": true, "score": 101, "feedback": "Too high." }
                                 """))
                 .andExpect(status().isBadRequest());
 
@@ -308,7 +329,7 @@ class AssignmentIntegrationTest {
                         .header("Authorization", bearer(instructorToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "status": "GRADED", "score": 95, "feedback": "Excellent." }
+                                { "status": "GRADED", "passed": true, "score": 95, "feedback": "Excellent." }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("GRADED"))
@@ -328,6 +349,97 @@ class AssignmentIntegrationTest {
                 .andExpect(jsonPath("$.data", hasSize(1)))
                 .andExpect(jsonPath("$.data[0].lessonId").value(setup.lessonId()))
                 .andExpect(jsonPath("$.data[0].completed").value(true));
+    }
+
+    @Test
+    void shouldRequireExplicitPassAndRecheckCertificateAfterRegrading() throws Exception {
+        CourseSetup setup = createPublishedCourseWithLesson("Pass decision course", "ASSIGNMENT");
+        Long assignmentId = createAssignment(setup.lessonId(), 7, instructorToken, status().isCreated()).at("/data/id").asLong();
+        Long enrollmentId = enroll(setup.courseId(), studentToken);
+        mockMvc.perform(patch("/api/v1/enrollments/{id}/lessons/{lid}/progress", enrollmentId, setup.lessonId())
+                        .header("Authorization", bearer(studentToken)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"completed\":true,\"watchedSeconds\":9999}"))
+                .andExpect(status().isConflict());
+        Long submissionId = submitAssignment(assignmentId, "Please assess", studentToken, status().isCreated())
+                .at("/data/id").asLong();
+        gradeDecision(submissionId, null, 95, status().isBadRequest());
+        gradeDecision(submissionId, false, 95, status().isOk());
+        certificate(enrollmentId, status().isBadRequest());
+        // Explicit instructor judgment, rather than a hidden numeric pass threshold, determines eligibility.
+        gradeDecision(submissionId, true, 0, status().isOk());
+        JsonNode original = certificate(enrollmentId, status().isOk());
+        org.assertj.core.api.Assertions.assertThat(courseCertificateRepository.count()).isEqualTo(1);
+        gradeDecision(submissionId, false, 95, status().isOk());
+        certificate(enrollmentId, status().isBadRequest());
+        org.assertj.core.api.Assertions.assertThat(enrollmentRepository.findById(enrollmentId).orElseThrow().getStatus().name())
+                .isEqualTo("ACTIVE");
+        gradeDecision(submissionId, true, 95, status().isOk());
+        JsonNode restored = certificate(enrollmentId, status().isOk());
+        org.assertj.core.api.Assertions.assertThat(restored.at("/data/certificateCode"))
+                .isEqualTo(original.at("/data/certificateCode"));
+        org.assertj.core.api.Assertions.assertThat(courseCertificateRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldRejectLegacyUnconfirmedGradeAndRevokedCertificate() throws Exception {
+        CourseSetup setup = createPublishedCourseWithLesson("Legacy decision course", "ASSIGNMENT");
+        Long assignmentId = createAssignment(setup.lessonId(), 7, instructorToken, status().isCreated()).at("/data/id").asLong();
+        Long enrollmentId = enroll(setup.courseId(), studentToken);
+        Long submissionId = submitAssignment(assignmentId, "Legacy grade", studentToken, status().isCreated())
+                .at("/data/id").asLong();
+        gradeDecision(submissionId, true, 95, status().isOk());
+        var legacy = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
+        legacy.setPassed(null);
+        assignmentSubmissionRepository.saveAndFlush(legacy);
+        certificate(enrollmentId, status().isBadRequest());
+        gradeDecision(submissionId, true, 95, status().isOk());
+        certificate(enrollmentId, status().isOk());
+        var cert = courseCertificateRepository.findByEnrollmentId(enrollmentId).orElseThrow();
+        cert.setRevokedAt(java.time.LocalDateTime.now());
+        courseCertificateRepository.saveAndFlush(cert);
+        certificate(enrollmentId, status().isConflict());
+    }
+
+    @Test
+    void shouldIssueOneCertificateWhenLastLessonsCompleteConcurrently() throws Exception {
+        Long category = createCategory("Concurrent completion", adminToken);
+        Long course = createCourse("Concurrent completion course", category, instructorToken);
+        Long section = createSection(course, "Final lessons", instructorToken);
+        Long first = createLesson(section, "First", "TEXT", instructorToken);
+        Long second = createLesson(section, "Second", "TEXT", instructorToken);
+        publishCourse(course, instructorToken);
+        Long enrollment = enroll(course, studentToken);
+        var executor = Executors.newFixedThreadPool(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            var futures = java.util.List.of(first, second).stream().map(lesson -> executor.submit(() -> {
+                if (!start.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Start timeout");
+                return learningProgressService.updateLearnerProgress(enrollment, lesson, null, true);
+            })).toList();
+            start.countDown();
+            for (var future : futures) future.get(20, TimeUnit.SECONDS);
+            certificate(enrollment, status().isOk());
+            org.assertj.core.api.Assertions.assertThat(courseCertificateRepository.count()).isEqualTo(1);
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+            org.assertj.core.api.Assertions.assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
+    }
+
+    private void gradeDecision(Long id, Boolean passed, int score, ResultMatcher expected) throws Exception {
+        String passField = passed == null ? "" : "\"passed\":" + passed + ",";
+        mockMvc.perform(patch("/api/v1/submissions/{id}/grade", id).header("Authorization", bearer(instructorToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"GRADED\",\"score\":" + score + "," + passField + "\"feedback\":\"Decision\"}"))
+                .andExpect(expected);
+    }
+
+    private JsonNode certificate(Long enrollmentId, ResultMatcher expected) throws Exception {
+        String body = mockMvc.perform(get("/api/v1/enrollments/{id}/certificate", enrollmentId)
+                        .header("Authorization", bearer(studentToken)))
+                .andExpect(expected).andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(body);
     }
 
     private CourseSetup createPublishedCourseWithLesson(String title, String lessonType) throws Exception {

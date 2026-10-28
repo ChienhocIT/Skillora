@@ -34,8 +34,11 @@ jobs:
       - name: Check Docker for Testcontainers
         run: docker info
 
+      - name: Validate deployment configuration
+        run: python3 scripts/check-compose-config.py --nginx
+
       - name: Verify
-        run: ./mvnw verify
+        run: sh ./mvnw verify
 
       - name: Assert MySQL schema validation ran
         run: |
@@ -49,6 +52,33 @@ jobs:
           grep -q 'tests="1"' "$REPORT"
           grep -q 'errors="0"' "$REPORT"
           grep -q 'failures="0"' "$REPORT"
+
+      - name: Assert MySQL commerce validation ran
+        run: |
+          REPORT="target/surefire-reports/TEST-com.example.skillora_platform.commerce.PaymentConcurrencyMySqlTest.xml"
+          test -f "$REPORT"
+          grep -q 'skipped="0"' "$REPORT"
+          grep -q 'errors="0"' "$REPORT"
+          grep -q 'failures="0"' "$REPORT"
+          grep -Eq 'tests="[1-9][0-9]*"' "$REPORT"
+
+      - name: Assert MySQL quiz attempt validation ran
+        run: |
+          REPORT="target/surefire-reports/TEST-com.example.skillora_platform.quiz.QuizAttemptMySqlTest.xml"
+          test -f "$REPORT"
+          grep -q 'skipped="0"' "$REPORT"
+          grep -q 'errors="0"' "$REPORT"
+          grep -q 'failures="0"' "$REPORT"
+          grep -Eq 'tests="[1-9][0-9]*"' "$REPORT"
+
+      - name: Assert MySQL completion policy validation ran
+        run: |
+          REPORT="target/surefire-reports/TEST-com.example.skillora_platform.assignment.CompletionPolicyMySqlTest.xml"
+          test -f "$REPORT"
+          grep -q 'skipped="0"' "$REPORT"
+          grep -q 'errors="0"' "$REPORT"
+          grep -q 'failures="0"' "$REPORT"
+          grep -Eq 'tests="[1-9][0-9]*"' "$REPORT"
 
   frontend:
     name: Frontend lint, typecheck, build
@@ -77,6 +107,12 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Proxy regression tests
+        run: npm run test:proxy
+
+      - name: No production mock data
+        run: npm run test:contract:no-mock-src
+
       - name: Build
         run: npm run build
 
@@ -84,6 +120,8 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: E2E smoke
+        env:
+          SKILLORA_E2E_STANDALONE: "true"
         run: |
           cp -r public .next/standalone/public
           mkdir -p .next/standalone/.next

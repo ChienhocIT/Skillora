@@ -52,7 +52,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
     setFileUrl((current) => current || mySubmission.fileUrl || "");
   }, [mySubmission]);
 
-  const isSubmitted = Boolean(mySubmission);
+  const isSubmitted = Boolean(mySubmission && mySubmission.status !== "RETURNED");
   const isGraded = mySubmission?.status === "GRADED";
   const dueAt = assignmentData?.dueAt;
 
@@ -85,15 +85,15 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
               />
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[--radius-card] border border-border/60 bg-card/75 p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
+                <div className="rounded-[var(--radius-card)] border border-border/60 bg-card/75 p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
                   <p className="text-xs font-semibold text-muted-foreground">Due date</p>
                   <p className="mt-1 text-sm font-extrabold text-foreground">{formatDate(assignmentData.dueAt)}</p>
                 </div>
-                <div className="rounded-[--radius-card] border border-border/60 bg-card/75 p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
+                <div className="rounded-[var(--radius-card)] border border-border/60 bg-card/75 p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
                   <p className="text-xs font-semibold text-muted-foreground">Max score</p>
                   <p className="mt-1 text-sm font-extrabold text-foreground">{assignmentData.maxScore ?? 100} pts</p>
                 </div>
-                <div className="rounded-[--radius-card] border border-border/60 bg-card/75 p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
+                <div className="rounded-[var(--radius-card)] border border-border/60 bg-card/75 p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
                   <p className="text-xs font-semibold text-muted-foreground">Your score</p>
                   <p className={cn("mt-1 text-sm font-extrabold", isGraded ? "text-emerald-600 dark:text-emerald-400" : "text-foreground")}>
                     {isGraded ? `${mySubmission.score} pts` : "Awaiting grade"}
@@ -103,7 +103,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
 
               {/* Overdue alert banner */}
               {isOverdue ? (
-                <Card className="border-destructive/30 bg-destructive/5 text-destructive p-4 flex gap-3 items-start rounded-[--radius-card]">
+                <Card className="border-destructive/30 bg-destructive/5 text-destructive p-4 flex gap-3 items-start rounded-[var(--radius-card)]">
                   <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-sm">Past Due Date</p>
@@ -115,7 +115,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
               ) : null}
 
               {/* Instructions */}
-              <Card className="border border-border/60 rounded-[--radius-card] shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
+              <Card className="border border-border/60 rounded-[var(--radius-card)] shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-base font-bold text-foreground">
                     <FileText className="h-4 w-4 text-primary" />
@@ -128,7 +128,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
               </Card>
 
               {/* Submit work */}
-              <Card className="border border-border/60 rounded-[--radius-card] shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
+              <Card className="border border-border/60 rounded-[var(--radius-card)] shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-bold text-foreground">Your Submission</CardTitle>
                 </CardHeader>
@@ -142,7 +142,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
                       onChange={(e) => setContent(e.target.value)}
                       placeholder="Write details or summary of your work..."
                       disabled={isSubmitted || submit.isPending}
-                      className="min-h-40 rounded-[--radius-input] border-border/70 text-sm transition-all placeholder:text-muted-foreground/60"
+                      className="min-h-40 rounded-[var(--radius-input)] border-border/70 text-sm transition-all placeholder:text-muted-foreground/60"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -153,7 +153,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
                       onChange={(e) => setFileUrl(e.target.value)}
                       placeholder="https://example.com/your-file"
                       disabled={isSubmitted || submit.isPending}
-                      className="h-11 rounded-[--radius-input] border-border/70 text-sm"
+                      className="h-11 rounded-[var(--radius-input)] border-border/70 text-sm"
                     />
                   </div>
 
@@ -161,7 +161,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
                     <Button
                       disabled={submit.isPending || (!content.trim() && !fileUrl.trim())}
                       onClick={() => submit.mutate()}
-                      className="mt-2 h-11 rounded-[--radius-button] px-5 text-sm font-bold"
+                      className="mt-2 h-11 rounded-[var(--radius-button)] px-5 text-sm font-bold"
                     >
                       <Send className="mr-2 h-4 w-4" />
                       Submit Assignment
@@ -177,7 +177,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
                       </div>
                       {mySubmission?.fileUrl ? (
                         <div className="mt-3">
-                          <Button asChild variant="outline" size="sm" className="h-8 text-[11px] font-bold rounded-[--radius-button] border-border/70 text-muted-foreground hover:text-foreground">
+                          <Button asChild variant="outline" size="sm" className="h-8 text-[11px] font-bold rounded-[var(--radius-button)] border-border/70 text-muted-foreground hover:text-foreground">
                             <a
                               href={mySubmission.fileUrl}
                               target="_blank"
@@ -197,7 +197,7 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
 
             <aside className="space-y-4 lg:sticky lg:top-24 lg:h-fit">
               {/* Status card */}
-              <Card className="border border-border/60 rounded-[--radius-card] shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
+              <Card className="border border-border/60 rounded-[var(--radius-card)] shadow-[0_1px_3px_0_rgba(0,0,0,0.01)]">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-xs font-bold text-foreground">Submission Status</CardTitle>
                 </CardHeader>
@@ -233,6 +233,9 @@ export function AssignmentPage({ assignmentId }: { assignmentId: number }) {
                           <span>Your Score</span>
                           <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{mySubmission.score} / {assignmentData.maxScore ?? 100}</span>
                         </div>
+                        <p className="text-xs font-bold">
+                          {mySubmission.passed == null ? "Awaiting instructor pass/fail confirmation" : mySubmission.passed ? "Passed" : "Not passed"}
+                        </p>
                         {mySubmission.feedback ? (
                           <div className="rounded-lg bg-muted/20 p-3 text-xs text-muted-foreground/90 border border-border/55">
                             <p className="font-bold text-foreground mb-1.5">Instructor feedback:</p>

@@ -134,6 +134,7 @@ public class AssignmentService {
                 .content(submission.getContent())
                 .fileUrl(submission.getFileUrl())
                 .score(submission.getScore())
+                .passed(submission.getPassed())
                 .feedback(submission.getFeedback())
                 .status(submission.getStatus())
                 .submittedAt(submission.getSubmittedAt())

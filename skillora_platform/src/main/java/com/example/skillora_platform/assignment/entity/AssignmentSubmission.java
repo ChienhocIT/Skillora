@@ -65,6 +65,9 @@ public class AssignmentSubmission {
     @Column(name = "score", precision = 8, scale = 2)
     private BigDecimal score;
 
+    @Column(name = "passed")
+    private Boolean passed;
+
     @Column(name = "feedback", columnDefinition = "TEXT")
     private String feedback;
 

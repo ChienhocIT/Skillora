@@ -20,5 +20,7 @@ public class AssignmentGradeRequest {
     @DecimalMin(value = "0.00", message = "Score must be at least 0")
     private BigDecimal score;
 
+    private Boolean passed;
+
     private String feedback;
 }

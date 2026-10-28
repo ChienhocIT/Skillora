@@ -82,7 +82,7 @@ export function WishlistPage() {
               <CardContent className="flex flex-col gap-4 p-4 sm:flex-row">
                 <Link
                   href={`/courses/${item.slug ?? item.courseId}`}
-                  className="relative aspect-video w-full shrink-0 overflow-hidden rounded-[--radius-input] bg-muted sm:w-44"
+                  className="relative aspect-video w-full shrink-0 overflow-hidden rounded-[var(--radius-input)] bg-muted sm:w-44"
                 >
                   {item.thumbnailUrl ? (
                     <Image

@@ -7,6 +7,9 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,6 +68,7 @@ import com.example.skillora_platform.user.repository.UserRepository;
 import com.example.skillora_platform.user.service.JwtService;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -94,6 +100,7 @@ class CommerceIntegrationTest {
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JwtService jwtService;
     @Autowired private PaymentService paymentService;
+    @Autowired private PlatformTransactionManager transactionManager;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private RoleRepository roleRepository;
     @Autowired private UserRepository userRepository;
@@ -581,6 +588,73 @@ class CommerceIntegrationTest {
                 """.formatted(orderId), studentToken, status().isCreated())
                 .at("/data/paymentTransactionId").asLong();
         assertThat(retryTxId).isNotEqualTo(txId);
+    }
+
+    @Test
+    void shouldSerializeConcurrentReturnAndIpnWithAlreadyLoadedPendingOrders() throws Exception {
+        Course course = createCourse("Concurrent settlement", money("200000"), CourseStatus.PUBLISHED, false);
+        Coupon coupon = createCoupon("CONCURRENT20", DiscountType.PERCENT, money("20"), 100, 0, null,
+                true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1));
+        addToCart(course.getId(), studentToken, status().isCreated());
+        Long orderId = postJson("/api/v1/orders/checkout", "{\"couponCode\":\"CONCURRENT20\"}",
+                studentToken, status().isCreated()).at("/data/id").asLong();
+        Long txId = postJson("/api/v1/payments/vnpay/create", "{\"orderId\":" + orderId + "}",
+                studentToken, status().isCreated()).at("/data/paymentTransactionId").asLong();
+        PaymentTransaction tx = paymentTransactionRepository.findById(txId).orElseThrow();
+        Map<String, String> params = signedVnPayParams(tx, "00", "00", "RACE_TX", null,
+                vnPayMinorAmount(tx.getAmount()));
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var futures = java.util.stream.IntStream.range(0, 2).mapToObj(index -> executor.submit(() ->
+                    new TransactionTemplate(transactionManager).execute(transaction -> {
+                        assertThat(orderRepository.findById(orderId).orElseThrow().getStatus()).isEqualTo(OrderStatus.PENDING);
+                        ready.countDown();
+                        try {
+                            if (!start.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Callback start timed out");
+                        } catch (InterruptedException ex) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException(ex);
+                        }
+                        if (index == 0) {
+                            assertThat(paymentService.handleVnPayIpn(params).rspCode()).isEqualTo("00");
+                        } else {
+                            assertThat(paymentService.handleVnPayReturn(params).getUrl()).contains("status=PAID");
+                        }
+                        return true;
+                    }))).toList();
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            for (var future : futures) assertThat(future.get(20, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
+        assertThat(orderRepository.findById(orderId).orElseThrow().getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(enrollmentRepository.countByUserId(student.getId())).isEqualTo(1);
+        assertThat(couponRepository.findById(coupon.getId()).orElseThrow().getUsedCount()).isEqualTo(1);
+        var notifications = notificationRepository.findAll();
+        assertThat(notifications.stream().filter(item -> item.getType() == NotificationType.ORDER_PAID).count()).isEqualTo(1);
+        assertThat(notifications.stream().filter(item -> item.getType() == NotificationType.PAYMENT_PAID).count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldNotEnrollOnSuccessfulCallbackAfterOrderCancellation() throws Exception {
+        Long orderId = createPendingGatewayOrder("Cancelled callback", studentToken);
+        Long txId = postJson("/api/v1/payments/vnpay/create", "{\"orderId\":" + orderId + "}",
+                studentToken, status().isCreated()).at("/data/paymentTransactionId").asLong();
+        PaymentTransaction tx = paymentTransactionRepository.findById(txId).orElseThrow();
+        Map<String, String> params = signedVnPayParams(tx, "00", "00", "LATE_TX", null,
+                vnPayMinorAmount(tx.getAmount()));
+        mockMvc.perform(patch("/api/v1/orders/{id}/cancel", orderId).header("Authorization", bearer(studentToken)))
+                .andExpect(status().isOk());
+        assertThatThrownBy(() -> paymentService.handleVnPayIpn(params))
+                .isInstanceOf(com.example.skillora_platform.exception.BusinessException.class);
+        assertThat(orderRepository.findById(orderId).orElseThrow().getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(paymentTransactionRepository.findById(txId).orElseThrow().getStatus()).isEqualTo(TxStatus.PENDING);
+        assertThat(enrollmentRepository.countByUserId(student.getId())).isZero();
     }
 
     private JsonNode addToCart(Long courseId, String accessToken, ResultMatcher expectedStatus) throws Exception {

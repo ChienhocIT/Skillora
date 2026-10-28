@@ -1,0 +1,1128 @@
+{
+  "schema_version": "1",
+  "mode": "range",
+  "repository": "E:/Skillora",
+  "from": "29fe9cc",
+  "to": "825469b",
+  "merge_base": "29fe9cc6b32a483d090840cde52e464bab0106c8",
+  "total_files": 181,
+  "reviewable_count": 156,
+  "excluded_count": 25,
+  "total_insertions": 36418,
+  "total_deletions": 18,
+  "reviewable_files": [
+    {
+      "path": ".github/workflows/backend-ci.yml",
+      "status": "modified",
+      "insertions": 69,
+      "deletions": 3
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/admin/service/AdminCourseService.java",
+      "status": "modified",
+      "insertions": 3,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/commerce/service/MomoCreatePaymentPayload.java",
+      "status": "modified",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/commerce/service/PaymentService.java",
+      "status": "modified",
+      "insertions": 8,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/config/BunnyStreamProperties.java",
+      "status": "modified",
+      "insertions": 44,
+      "deletions": 1
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/config/MomoProperties.java",
+      "status": "modified",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/config/SecurityConfig.java",
+      "status": "modified",
+      "insertions": 1,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/controller/VideoWebhookController.java",
+      "status": "added",
+      "insertions": 31,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/dto/LessonSummaryResponse.java",
+      "status": "modified",
+      "insertions": 3,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/dto/LessonVideoResponse.java",
+      "status": "modified",
+      "insertions": 1,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/repository/LessonVideoRepository.java",
+      "status": "modified",
+      "insertions": 3,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/service/BunnyStreamUrlService.java",
+      "status": "added",
+      "insertions": 126,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/service/CoursePublishingReadinessService.java",
+      "status": "added",
+      "insertions": 46,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/service/CourseService.java",
+      "status": "modified",
+      "insertions": 2,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/service/CourseVersionService.java",
+      "status": "modified",
+      "insertions": 2,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/service/LessonService.java",
+      "status": "modified",
+      "insertions": 6,
+      "deletions": 4
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/service/LessonVideoService.java",
+      "status": "modified",
+      "insertions": 123,
+      "deletions": 1
+    },
+    {
+      "path": "skillora_platform/src/main/java/com/example/skillora_platform/course/service/SectionService.java",
+      "status": "modified",
+      "insertions": 2,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/resources/application.yml",
+      "status": "modified",
+      "insertions": 8,
+      "deletions": 1
+    },
+    {
+      "path": "skillora_platform/src/main/resources/db/migration/V2__align_currency_columns_with_jpa.sql",
+      "status": "added",
+      "insertions": 11,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/resources/db/migration/V3__course_versioning.sql",
+      "status": "added",
+      "insertions": 22,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_platform/src/main/resources/logback-spring.xml",
+      "status": "added",
+      "insertions": 24,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/.dockerignore",
+      "status": "added",
+      "insertions": 25,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/.gitignore",
+      "status": "added",
+      "insertions": 49,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/Dockerfile",
+      "status": "added",
+      "insertions": 47,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/components.json",
+      "status": "added",
+      "insertions": 25,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/eslint.config.mjs",
+      "status": "added",
+      "insertions": 18,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/next.config.ts",
+      "status": "added",
+      "insertions": 18,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/package.json",
+      "status": "added",
+      "insertions": 59,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/playwright.config.ts",
+      "status": "added",
+      "insertions": 28,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/postcss.config.mjs",
+      "status": "added",
+      "insertions": 7,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/scripts/check-no-src-mock.mjs",
+      "status": "added",
+      "insertions": 40,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/scripts/run-live-local-e2e.mjs",
+      "status": "added",
+      "insertions": 21,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/scripts/run-playwright.mjs",
+      "status": "added",
+      "insertions": 14,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/scripts/start-standalone.mjs",
+      "status": "added",
+      "insertions": 24,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/admin/audit-logs/page.tsx",
+      "status": "added",
+      "insertions": 6,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/admin/categories/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/admin/coupons/page.tsx",
+      "status": "added",
+      "insertions": 6,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/admin/courses/page.tsx",
+      "status": "added",
+      "insertions": 6,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/admin/page.tsx",
+      "status": "added",
+      "insertions": 6,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/admin/review-queue/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/admin/users/page.tsx",
+      "status": "added",
+      "insertions": 6,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/api/backend/[...path]/route.ts",
+      "status": "added",
+      "insertions": 249,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/api/health/route.ts",
+      "status": "added",
+      "insertions": 10,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/assignments/[assignmentId]/page.tsx",
+      "status": "added",
+      "insertions": 7,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/cart/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/chat/page.tsx",
+      "status": "added",
+      "insertions": 11,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/courses/[idOrSlug]/page.tsx",
+      "status": "added",
+      "insertions": 61,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/dashboard/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/forgot-password/page.tsx",
+      "status": "added",
+      "insertions": 21,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/globals.css",
+      "status": "added",
+      "insertions": 330,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/help/page.tsx",
+      "status": "added",
+      "insertions": 48,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/instructor/courses/[courseId]/page.tsx",
+      "status": "added",
+      "insertions": 7,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/instructor/courses/new/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/instructor/grading/page.tsx",
+      "status": "added",
+      "insertions": 11,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/instructor/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/instructors/[id]/page.tsx",
+      "status": "added",
+      "insertions": 12,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/layout.tsx",
+      "status": "added",
+      "insertions": 53,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/learn/[enrollmentId]/lessons/[lessonId]/page.tsx",
+      "status": "added",
+      "insertions": 16,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/learn/[enrollmentId]/page.tsx",
+      "status": "added",
+      "insertions": 7,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/lessons/[lessonId]/page.tsx",
+      "status": "added",
+      "insertions": 7,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/login/page.tsx",
+      "status": "added",
+      "insertions": 30,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/not-found.tsx",
+      "status": "added",
+      "insertions": 39,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/notifications/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/orders/[orderId]/page.tsx",
+      "status": "added",
+      "insertions": 7,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/orders/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/page.tsx",
+      "status": "added",
+      "insertions": 12,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/payment/result/page.tsx",
+      "status": "added",
+      "insertions": 11,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/privacy/page.tsx",
+      "status": "added",
+      "insertions": 32,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/profile/page.tsx",
+      "status": "added",
+      "insertions": 6,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/quizzes/[quizId]/page.tsx",
+      "status": "added",
+      "insertions": 7,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/register/page.tsx",
+      "status": "added",
+      "insertions": 24,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/reset-password/page.tsx",
+      "status": "added",
+      "insertions": 17,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/terms/page.tsx",
+      "status": "added",
+      "insertions": 34,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/app/wishlist/page.tsx",
+      "status": "added",
+      "insertions": 5,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ai-elements/conversation.tsx",
+      "status": "added",
+      "insertions": 168,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ai-elements/message.tsx",
+      "status": "added",
+      "insertions": 360,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ai-elements/prompt-input.tsx",
+      "status": "added",
+      "insertions": 1465,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ai-elements/suggestion.tsx",
+      "status": "added",
+      "insertions": 57,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/app-shell.tsx",
+      "status": "added",
+      "insertions": 223,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ask-ai-button.tsx",
+      "status": "added",
+      "insertions": 58,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/auth-card.tsx",
+      "status": "added",
+      "insertions": 72,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/brand-logo.tsx",
+      "status": "added",
+      "insertions": 98,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/confirm-action-dialog.tsx",
+      "status": "added",
+      "insertions": 64,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/course-card.tsx",
+      "status": "added",
+      "insertions": 227,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/data-state.tsx",
+      "status": "added",
+      "insertions": 75,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/marketplace-header.tsx",
+      "status": "added",
+      "insertions": 343,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/marketplace-layout.tsx",
+      "status": "added",
+      "insertions": 26,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/metric-card.tsx",
+      "status": "added",
+      "insertions": 32,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/page-header.tsx",
+      "status": "added",
+      "insertions": 23,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/providers.tsx",
+      "status": "added",
+      "insertions": 33,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/role-guard.tsx",
+      "status": "added",
+      "insertions": 47,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/status-badge.tsx",
+      "status": "added",
+      "insertions": 27,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/theme-toggle.tsx",
+      "status": "added",
+      "insertions": 25,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/accordion.tsx",
+      "status": "added",
+      "insertions": 81,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/alert-dialog.tsx",
+      "status": "added",
+      "insertions": 199,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/alert.tsx",
+      "status": "added",
+      "insertions": 76,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/avatar.tsx",
+      "status": "added",
+      "insertions": 112,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/badge.tsx",
+      "status": "added",
+      "insertions": 49,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/button-group.tsx",
+      "status": "added",
+      "insertions": 83,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/button.tsx",
+      "status": "added",
+      "insertions": 67,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/card.tsx",
+      "status": "added",
+      "insertions": 103,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/checkbox.tsx",
+      "status": "added",
+      "insertions": 33,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/collapsible.tsx",
+      "status": "added",
+      "insertions": 33,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/command.tsx",
+      "status": "added",
+      "insertions": 195,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/dialog.tsx",
+      "status": "added",
+      "insertions": 168,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/dropdown-menu.tsx",
+      "status": "added",
+      "insertions": 269,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/hover-card.tsx",
+      "status": "added",
+      "insertions": 44,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/input-group.tsx",
+      "status": "added",
+      "insertions": 156,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/input.tsx",
+      "status": "added",
+      "insertions": 19,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/label.tsx",
+      "status": "added",
+      "insertions": 24,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/progress.tsx",
+      "status": "added",
+      "insertions": 31,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/scroll-area.tsx",
+      "status": "added",
+      "insertions": 55,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/select.tsx",
+      "status": "added",
+      "insertions": 192,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/separator.tsx",
+      "status": "added",
+      "insertions": 28,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/sheet.tsx",
+      "status": "added",
+      "insertions": 147,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/skeleton.tsx",
+      "status": "added",
+      "insertions": 13,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/spinner.tsx",
+      "status": "added",
+      "insertions": 10,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/switch.tsx",
+      "status": "added",
+      "insertions": 33,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/table.tsx",
+      "status": "added",
+      "insertions": 116,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/tabs.tsx",
+      "status": "added",
+      "insertions": 90,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/textarea.tsx",
+      "status": "added",
+      "insertions": 18,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/components/ui/tooltip.tsx",
+      "status": "added",
+      "insertions": 57,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/admin/admin-pages.tsx",
+      "status": "added",
+      "insertions": 1232,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/admin/categories-page.tsx",
+      "status": "added",
+      "insertions": 295,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/admin/review-queue-page.tsx",
+      "status": "added",
+      "insertions": 595,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/auth/auth-forms.tsx",
+      "status": "added",
+      "insertions": 247,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/catalog/catalog-page.tsx",
+      "status": "added",
+      "insertions": 486,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/course/course-detail-page.tsx",
+      "status": "added",
+      "insertions": 668,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/course/review-form.tsx",
+      "status": "added",
+      "insertions": 159,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/instructor/course-builder.tsx",
+      "status": "added",
+      "insertions": 1873,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/instructor/course-create.tsx",
+      "status": "added",
+      "insertions": 251,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/instructor/grading-dashboard.tsx",
+      "status": "added",
+      "insertions": 351,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/instructor/instructor-home.tsx",
+      "status": "added",
+      "insertions": 147,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/instructor/public-instructor-page.tsx",
+      "status": "added",
+      "insertions": 119,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/assignment-page.tsx",
+      "status": "added",
+      "insertions": 253,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/cart-page.tsx",
+      "status": "added",
+      "insertions": 253,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/chat-page.tsx",
+      "status": "added",
+      "insertions": 559,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/dashboard-page.tsx",
+      "status": "added",
+      "insertions": 170,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/learning-progress-page.tsx",
+      "status": "added",
+      "insertions": 182,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/lesson-page.tsx",
+      "status": "added",
+      "insertions": 215,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/notifications-page.tsx",
+      "status": "added",
+      "insertions": 187,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/order-detail-page.tsx",
+      "status": "added",
+      "insertions": 198,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/orders-page.tsx",
+      "status": "added",
+      "insertions": 149,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/payment-result-page.tsx",
+      "status": "added",
+      "insertions": 130,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/quiz-page.tsx",
+      "status": "added",
+      "insertions": 280,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/learner/wishlist-page.tsx",
+      "status": "added",
+      "insertions": 161,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/features/profile/profile-page.tsx",
+      "status": "added",
+      "insertions": 180,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/lib/api.ts",
+      "status": "added",
+      "insertions": 365,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/lib/config.ts",
+      "status": "added",
+      "insertions": 10,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/lib/format.ts",
+      "status": "added",
+      "insertions": 71,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/lib/query-keys.ts",
+      "status": "added",
+      "insertions": 74,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/lib/types.ts",
+      "status": "added",
+      "insertions": 521,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/lib/utils.ts",
+      "status": "added",
+      "insertions": 6,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/src/proxy.ts",
+      "status": "added",
+      "insertions": 76,
+      "deletions": 0
+    },
+    {
+      "path": "skillora_web/tsconfig.json",
+      "status": "added",
+      "insertions": 34,
+      "deletions": 0
+    }
+  ],
+  "excluded_files": [
+    {
+      "path": "skillora_platform/.env.example",
+      "status": "modified",
+      "insertions": 11,
+      "deletions": 1,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/admin/AdminIntegrationTest.java",
+      "status": "modified",
+      "insertions": 2,
+      "deletions": 2,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/commerce/CommerceIntegrationTest.java",
+      "status": "modified",
+      "insertions": 10,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/commerce/PaymentDisabledIntegrationTest.java",
+      "status": "added",
+      "insertions": 109,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/config/DevDataBootstrapIntegrationTest.java",
+      "status": "added",
+      "insertions": 122,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/config/FlywayMySqlSchemaValidationTest.java",
+      "status": "modified",
+      "insertions": 1,
+      "deletions": 1,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/course/CourseIntegrationTest.java",
+      "status": "modified",
+      "insertions": 225,
+      "deletions": 2,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/course/CourseVersionIntegrationTest.java",
+      "status": "added",
+      "insertions": 287,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/user/AuthIntegrationTest.java",
+      "status": "modified",
+      "insertions": 19,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_platform/src/test/java/com/example/skillora_platform/user/PasswordResetProductionIntegrationTest.java",
+      "status": "modified",
+      "insertions": 7,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_web/.env.example",
+      "status": "added",
+      "insertions": 11,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/CLAUDE.md",
+      "status": "added",
+      "insertions": 0,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/DESIGN.md",
+      "status": "added",
+      "insertions": 73,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/README.md",
+      "status": "added",
+      "insertions": 114,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/package-lock.json",
+      "status": "added",
+      "insertions": 15161,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_web/public/file.svg",
+      "status": "added",
+      "insertions": 1,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/public/globe.svg",
+      "status": "added",
+      "insertions": 1,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/public/hero.png",
+      "status": "binary",
+      "insertions": 0,
+      "deletions": 0,
+      "exclude_reason": "binary"
+    },
+    {
+      "path": "skillora_web/public/next.svg",
+      "status": "added",
+      "insertions": 1,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/public/vercel.svg",
+      "status": "added",
+      "insertions": 1,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/public/window.svg",
+      "status": "added",
+      "insertions": 1,
+      "deletions": 0,
+      "exclude_reason": "unsupported_ext"
+    },
+    {
+      "path": "skillora_web/src/app/favicon.ico",
+      "status": "binary",
+      "insertions": 0,
+      "deletions": 0,
+      "exclude_reason": "binary"
+    },
+    {
+      "path": "skillora_web/tests/e2e/live-backend.spec.ts",
+      "status": "added",
+      "insertions": 449,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_web/tests/e2e/skillora-v1.spec.ts",
+      "status": "added",
+      "insertions": 626,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    },
+    {
+      "path": "skillora_web/tests/e2e/smoke.spec.ts",
+      "status": "added",
+      "insertions": 709,
+      "deletions": 0,
+      "exclude_reason": "default_path"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "skillora_web",
+      "framework": "nextjs",
+      "buildCommand": "npm run build",
+      "installCommand": "npm ci --no-audit --no-fund",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "backend",
+          "format": "url",
+          "env": "API_BASE_URL"
+        }
+      ]
+    },
+    "backend": {
+      "root": "skillora_platform",
+      "runtime": "container",
+      "entrypoint": "Dockerfile"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/v1/:path*", "destination": { "service": "backend" } },
+    { "source": "/oauth2/authorization/:path*", "destination": { "service": "backend" } },
+    { "source": "/login/oauth2/:path*", "destination": { "service": "backend" } },
+    { "source": "/actuator/health", "destination": { "service": "backend" } },
+    { "source": "/actuator/health/:path*", "destination": { "service": "backend" } },
+    { "source": "/:path*", "destination": { "service": "frontend" } }
+  ]
+}

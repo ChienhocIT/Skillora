@@ -80,7 +80,7 @@ public class EnrollmentController {
     ) {
         enrollmentService.getEnrollment(enrollmentId, jwt.getSubject());
         return ApiResponse.success("Progress updated",
-                learningProgressService.updateProgress(
+                learningProgressService.updateLearnerProgress(
                         enrollmentId, lessonId, request.getWatchedSeconds(), request.getCompleted()));
     }
 

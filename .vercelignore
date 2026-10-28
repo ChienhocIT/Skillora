@@ -1,0 +1,12 @@
+.git/
+.agent/
+.idea/
+artifacts/
+**/node_modules/
+**/.next/
+**/target/
+**/test-results/
+**/playwright-report/
+**/.env*
+**/nginx/certs/
+**/*.log

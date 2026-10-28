@@ -10,9 +10,11 @@ import { toast } from "sonner";
 import { MarketplaceLayout } from "@/components/marketplace-layout";
 import { EmptyState, ErrorState, PageSkeleton } from "@/components/data-state";
 import { PageHeader } from "@/components/page-header";
+import { CourseThumbnail } from "@/components/course-thumbnail";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { commerceApi } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
@@ -46,16 +48,12 @@ export function CartPage() {
   const validateCoupon = useMutation({
     mutationFn: (code: string) => commerceApi.validateCoupon(code),
     onSuccess: (data) => {
-      if (data.valid) {
-        setAppliedCoupon({
-          code: couponCode.toUpperCase(),
-          discountType: data.discountType,
-          discountValue: data.discountValue,
-        });
-        toast.success("Coupon applied successfully");
-      } else {
-        toast.error(data.message ?? "Invalid coupon code");
-      }
+      setAppliedCoupon({
+        code: couponCode.toUpperCase(),
+        discountType: data.discountType,
+        discountValue: data.discountValue,
+      });
+      toast.success("Coupon applied successfully");
     },
     onError: (error) => toast.error((error as Error).message),
   });
@@ -130,21 +128,19 @@ export function CartPage() {
         ) : null}
 
         {items.length > 0 ? (
-          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            <section className="space-y-4">
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+            <section className="space-y-4" aria-label="Selected courses">
               {items.map((item) => (
                 <Card key={item.courseId}>
                   <CardContent className="flex items-center justify-between gap-4 p-4">
+                    <Link href={`/courses/${item.courseId}`} className="relative hidden aspect-video w-32 shrink-0 overflow-hidden rounded-md sm:block" tabIndex={-1} aria-hidden="true"><CourseThumbnail src={item.thumbnailUrl} title={item.title} sizes="128px" /></Link>
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/courses/${item.courseId}`}
-                        className="font-semibold hover:text-primary transition-colors line-clamp-1 text-sm sm:text-base"
+                        className="font-semibold hover:text-primary transition-colors line-clamp-2 text-base"
                       >
                         {item.title}
                       </Link>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Instructor: Skillora Instructor
-                      </p>
                       <p className="text-sm font-semibold mt-1">
                         {formatMoney(item.discountPrice ?? item.price, item.currency)}
                       </p>
@@ -164,7 +160,7 @@ export function CartPage() {
               ))}
             </section>
 
-            <aside className="space-y-4">
+            <aside className="space-y-5 lg:sticky lg:top-24" aria-label="Checkout summary">
               {/* Coupon card */}
               <Card>
                 <CardHeader className="pb-3">
@@ -189,12 +185,14 @@ export function CartPage() {
                       </Button>
                     </div>
                   ) : (
-                    <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                    <form onSubmit={handleApplyCoupon} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                      <Label htmlFor="cart-coupon" className="col-span-2">Coupon code</Label>
                       <Input
+                        id="cart-coupon"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
                         placeholder="Enter coupon code"
-                        className="h-9 uppercase"
+                        className="h-11 uppercase"
                         disabled={validateCoupon.isPending}
                       />
                       <Button

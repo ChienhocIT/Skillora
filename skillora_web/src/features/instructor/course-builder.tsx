@@ -789,7 +789,13 @@ function EditableLessonRow({
     queryKey: queryKeys.lesson(lesson.id),
     queryFn: () => learnerApi.getLesson(lesson.id),
   });
-  const refetchLesson = fullLesson.refetch;
+  const { refetch: refetchFullLesson } = fullLesson;
+  const refetchLesson = React.useCallback(async () => {
+    const result = await refetchFullLesson();
+    if (result.data?.video?.status === "READY" || result.data?.video?.status === "FAILED") {
+      setAwaitingProcessing(false);
+    }
+  }, [refetchFullLesson]);
 
   const contentValue = contentDraft ?? fullLesson.data?.content ?? "";
   const backendVideoStatus = fullLesson.data?.video?.status ?? lesson.videoStatus ?? null;
@@ -798,12 +804,6 @@ function EditableLessonRow({
     ? "PROCESSING"
     : backendVideoStatus;
   const hasVideo = hasBackendVideo || awaitingProcessing;
-
-  React.useEffect(() => {
-    if (backendVideoStatus === "READY" || backendVideoStatus === "FAILED") {
-      setAwaitingProcessing(false);
-    }
-  }, [backendVideoStatus]);
 
   React.useEffect(() => {
     if (!isProcessingVideoStatus(videoStatus)) {

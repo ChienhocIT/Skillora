@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const baseUrl = "http://127.0.0.1:3000";
+const baseUrl = process.env.SKILLORA_E2E_BASE_URL ?? "http://127.0.0.1:3000";
 
 const pageResponse = {
   content: [
@@ -130,7 +130,7 @@ test.beforeEach(async ({ context }) => {
         contentType: "application/json",
         body: JSON.stringify({
           success: true,
-          data: { items: [], subtotal: 0, total: 0, currency: "VND" },
+          data: { items: [], subtotalAmount: 0, currency: "VND" },
         }),
       });
       return;
@@ -419,7 +419,7 @@ test.beforeEach(async ({ context }) => {
 test("catalog renders mocked published courses", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: /Skills for your future/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Skills for your next chapter/i })).toBeVisible();
   await expect(page.getByText("Spring Boot Production Course")).toBeVisible();
   await expect(page.getByText("Skillora Instructor")).toBeVisible();
   await expect(page.getByText("4.7")).toBeVisible();
@@ -437,8 +437,8 @@ test("protected admin route redirects to login without session", async ({ page }
 test("payment result explains retryable pending orders", async ({ page }) => {
   await page.goto("/payment/result?gateway=VNPAY&orderId=77&status=FAILED");
 
-  await expect(page.getByRole("heading", { name: "Payment Failed" })).toBeVisible();
-  await expect(page.getByText("You can safely retry paying for this order.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Pending Gateway Confirmation" })).toBeVisible();
+  await expect(page.getByText("The gateway has not confirmed the transaction. Please wait or refresh to verify.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry VNPay" })).toBeVisible();
   await expect(page.getByRole("link", { name: "View Order" })).toHaveAttribute("href", "/orders/77");
 });
@@ -516,6 +516,7 @@ test("course builder sends file metadata when preparing video upload", async ({ 
   await context.addCookies([sessionCookie(["INSTRUCTOR"])]);
 
   let uploadBody: unknown = null;
+  let videoStatus = "UPLOADING";
   await page.route("**/api/backend/courses/101", async (route) => {
     await route.fulfill({
       contentType: "application/json",
@@ -565,7 +566,7 @@ test("course builder sends file metadata when preparing video upload", async ({ 
           preview: false,
           published: true,
           orderIndex: 0,
-          video: { status: "UPLOADING" },
+          video: { status: videoStatus },
           resources: [],
         },
       }),
@@ -573,6 +574,7 @@ test("course builder sends file metadata when preparing video upload", async ({ 
   });
   await page.route("**/api/backend/lessons/42/video/upload-url", async (route) => {
     uploadBody = route.request().postDataJSON();
+    videoStatus = "UPLOADING";
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
@@ -643,6 +645,18 @@ test("course builder sends file metadata when preparing video upload", async ({ 
     fileSizeBytes: 5,
   });
   await expect(page.getByText("Processing", { exact: true })).toBeVisible();
+  const videoStatusBadge = page.getByText("Video status", { exact: true }).locator("..").locator('[data-slot="badge"]');
+  videoStatus = "READY";
+  await expect(videoStatusBadge).toHaveText("Ready", { timeout: 10_000 });
+
+  await page.locator("#lesson-video-file-42").setInputFiles({
+    name: "retry.mp4", mimeType: "video/mp4", buffer: Buffer.from("video"),
+  });
+  await page.getByRole("button", { name: "Upload Video" }).click();
+  await expect.poll(() => uploadBody).toEqual({ fileName: "retry.mp4", mimeType: "video/mp4", fileSizeBytes: 5 });
+  await expect(page.getByText("Processing", { exact: true })).toBeVisible();
+  videoStatus = "FAILED";
+  await expect(videoStatusBadge).toHaveText("Failed", { timeout: 10_000 });
 });
 
 test("chat workspace renders PageResponse conversations and appends assistant replies", async ({ context, page }) => {
@@ -706,4 +720,45 @@ test("course detail exposes a course-scoped AI entry point", async ({ context, p
   const askAi = page.getByRole("link", { name: "Ask AI about this course" });
   await expect(askAi).toBeVisible();
   await expect(askAi).toHaveAttribute("href", /\/chat\?courseId=101&prompt=/);
+});
+
+test("payment confirmation follows the order API even when the callback query disagrees", async ({ page }) => {
+  await page.goto("/payment/result?orderId=77&status=SUCCESS");
+  await expect(page.getByRole("heading", { name: "Pending Gateway Confirmation" })).toBeVisible();
+  await expect(page.getByText("Your enrollment is confirmed!")).toHaveCount(0);
+  await page.goto("/payment/result?orderId=88&status=FAILED");
+  await expect(page.getByRole("heading", { name: "Payment Successful" })).toBeVisible();
+  await page.goto("/payment/result?status=SUCCESS");
+  await expect(page.getByText("Your enrollment is confirmed!")).toHaveCount(0);
+});
+
+test("order API errors do not confirm a successful payment", async ({ page }) => {
+  await page.route("**/api/backend/orders/99", route => route.fulfill({
+    status: 503, contentType: "application/json", body: JSON.stringify({ success: false, message: "Order unavailable" }),
+  }));
+  await page.goto("/payment/result?orderId=99&status=SUCCESS");
+  await expect(page.getByText("Order unavailable")).toBeVisible();
+  await expect(page.getByText("Your enrollment is confirmed!")).toHaveCount(0);
+});
+
+test("named notification events refresh the list and reconnect after a closed stream", async ({ context, page }) => {
+  await context.addCookies([sessionCookie(["STUDENT"])]);
+  let streamConnections = 0;
+  let listRequests = 0;
+  await page.route("**/api/backend/notifications?*", route => {
+    listRequests++;
+    return route.fulfill({ contentType: "application/json", body: JSON.stringify({ success: true, data: {
+      content: [{ id: 1, title: `Update ${listRequests}`, content: "Notification received", read: false }],
+      page: 0, size: 20, totalElements: 1, totalPages: 1, first: true, last: true,
+    } }) });
+  });
+  await page.route("**/api/backend/notifications/stream", async route => {
+    streamConnections++;
+    // Close a real SSE response; native EventSource should reconnect rather than being closed by onerror.
+    await route.fulfill({ contentType: "text/event-stream", body: "retry: 100\nevent: notification\ndata: {\"id\":1}\n\n" });
+  });
+  await page.goto("/notifications");
+  await expect.poll(() => streamConnections).toBeGreaterThan(1);
+  await expect.poll(() => listRequests).toBeGreaterThan(1);
+  await expect(page.getByText("Notification received")).toBeVisible();
 });

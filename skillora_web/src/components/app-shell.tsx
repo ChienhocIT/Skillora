@@ -144,15 +144,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-surface min-h-[100dvh]">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-border/70 bg-card/88 shadow-[18px_0_50px_-42px_rgba(15,23,42,0.55)] backdrop-blur-xl lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border/70 bg-card lg:block">
         <div className="flex h-[4.5rem] items-center gap-3 border-b border-border/70 px-5">
           <BrandLogo size="md" variant="full" href="/" />
         </div>
         <div className="p-4">{navContent}</div>
       </aside>
 
-      <div className="lg:pl-72">
-        <header className="sticky top-0 z-20 flex h-[4.5rem] items-center justify-between border-b border-border/70 bg-background/88 px-4 shadow-[0_12px_36px_-32px_rgba(15,23,42,0.5)] backdrop-blur-xl md:px-6">
+      <div className="lg:pl-64">
+        <header className="sticky top-0 z-20 flex h-[4.5rem] items-center justify-between border-b border-border/70 bg-background px-4 md:px-6">
           <div className="flex items-center gap-2">
             <Sheet>
               <SheetTrigger asChild>
@@ -166,6 +166,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </SheetContent>
             </Sheet>
             <BrandLogo size="sm" variant="full" href="/" className="lg:hidden" />
+            <span className="hidden text-sm font-semibold text-muted-foreground lg:block">{pathname.startsWith("/admin") ? "Administration" : pathname.startsWith("/instructor") ? "Instructor workspace" : "Learning workspace"}</span>
           </div>
           <div className="flex items-center gap-2">
             {user ? (
@@ -214,7 +215,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
         </header>
-        <main id="main-content" className="mx-auto flex w-full max-w-[1500px] flex-1 flex-col gap-7 px-4 py-7 md:px-6 lg:py-8">
+        <main id="main-content" className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-7 px-4 py-7 md:px-8 lg:py-10">
           {children}
         </main>
       </div>

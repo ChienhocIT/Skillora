@@ -59,6 +59,7 @@ docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.l
 ```bash
 npm run lint
 npm run typecheck
+npm run test:proxy
 npm run build
 npm run start:standalone
 npm run test:contract:no-mock-src
@@ -69,6 +70,10 @@ Mock E2E is a fast regression suite only:
 ```bash
 npm run test:e2e:mock
 ```
+
+To test the production build, first run `npm run build` and `npm run start:standalone` in a separate terminal, then set `SKILLORA_E2E_STANDALONE=true` before running the mock suite. The flag tells Playwright that the caller owns port 3000; without it Playwright starts its own dev server.
+
+Current local implementation checks and remaining runtime acceptance are recorded in [implementation status](../docs/IMPLEMENTATION_STATUS.md). TLS, provider env wiring, isolated UAT and optional Google OAuth are described in the [deployment runbook](../docs/DEPLOYMENT.md).
 
 E2E scripts run through `scripts/run-playwright.mjs`, which caps Node heap by default for stable Windows/Node 24 execution. Override `NODE_OPTIONS` only when you intentionally need a different limit.
 

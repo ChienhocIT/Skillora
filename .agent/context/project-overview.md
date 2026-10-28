@@ -1,76 +1,44 @@
 # Context: Project Overview
 
-> Snapshot of Skillora backend state. Updated: 2026-06-05 after production-backend completion pass.
+> Current working-tree implementation status: 2026-10-28, `bugfix/release-readiness-20261028`, baseline `825469b44ac88852dcdd807a1ec5f87047f20295`.
+> [Implementation evidence](../../docs/IMPLEMENTATION_STATUS.md), [plan](../../docs/UPDATE_PLAN.md), [deployment runbook](../../docs/DEPLOYMENT.md), [historical baseline review](../../docs/reviews/2026-10-28-codebase-review.md).
+> Current [Docker delivery](../../docs/DOCKER_PACKAGE.md), [business report](../../docs/PROJECT_REPORT.md), [completion plan](../../docs/COMPLETION_PLAN.md).
 
-## Project Summary
+## Implementation
 
-| Attribute | Value |
-|-----------|-------|
-| Name | Skillora Platform |
-| Type | E-learning platform backend |
-| Stack | Spring Boot 3.5.14, Java 17, MySQL 8+, Redis 7 |
-| Architecture | Layered Controller -> Service -> Repository -> Entity |
-| API Base | `/api/v1` |
-| Modules | 10: user, course, enrollment, quiz, assignment, commerce, review, chat, notification, admin |
-| Java Files | 314 |
-| Test Suites | 14 |
-| Latest Verification | `mvnw.cmd verify` passed 81/81, packaged the jar, generated JaCoCo, and passed the 60% coverage gate on 2026-06-05 |
-| API MVP Completeness | ~100% backend API surface implemented |
-| Production Readiness | ~88-90%; remaining work is mostly external-provider validation and scale hardening |
+- Spring Boot 3.5.14 / Java 17 backend; Next.js 16.2.10 / React 19 frontend; same-origin API proxy.
+- Ten modules: user, course, enrollment, quiz, assignment, commerce, review, chat, notification, admin.
+- MySQL 8.4 intended runtime, H2 local integration tests, Flyway V1-V6, Redis cache.
+- Main learner/instructor/admin workflows are implemented. Full curriculum versioning, certificate PDF/public verification/admin revocation, managed file uploads and multi-instance hardening remain backlog.
 
-## Completion Status
+> Current business changes and API contracts: [P03/P04.1](../../docs/IMPLEMENTATION_P03_P04.md). Certificates require published lessons + quiz pass + explicit instructor assignment pass. Prior grades with null decision require confirmation.
 
-| Module | API Status | Production Notes |
-|--------|------------|------------------|
-| Foundation/Core Config | Complete | Actuator health, OpenAPI, profiles, Docker, CI, JaCoCo report, Flyway migration added |
-| User + Auth + JWT + OAuth2 | Complete | SMTP reset-email delivery and one-time OAuth code exchange remain future hardening |
-| Course Catalog + Content | Complete | Redis-backed public course cache added; Bunny webhook/status sync still deferred |
-| Enrollment + Progress | Complete | Free enrollment, progress, certificates, dashboard verified |
-| Quiz Engine | Complete | Timed-attempt enforcement still deferred |
-| Assignment + Grading | Complete | Managed file upload/scanning still deferred |
-| Commerce + Payments | Complete | VNPay and MoMo create/return/IPN code implemented; sandbox/provider validation still required |
-| Review/Rating | Complete | N+1 optimization for like counts remains scale debt |
-| AI Chatbot | Complete | Gemini runtime path implemented; streaming, quota dashboard, and circuit breaker deferred |
-| Notifications | Complete | REST + in-memory SSE implemented; broker/Redis pub-sub fanout needed for multi-instance deploy |
-| Admin Dashboard + Audit | Complete | Dashboard enum bug and audit lazy-load bug fixed; admin regression tests pass |
+## Latest local verification
 
-## What's Ready
+| Check | Result |
+|---|---|
+| Java 17.0.17 offline `mvnw verify` with Docker | BUILD SUCCESS, packaged JAR; 148 passed, 0 failed/errors, 0 skipped |
+| JaCoCo | Instruction 81.62%, line 84.33%, branch 55.83%; 60% instruction gate passed |
+| Frontend lint / typecheck / production build / no-mock-identifier contract | Passed |
+| Proxy and OAuth callback regression | 9/9 passed with mocked backend |
+| Chromium mock E2E on production standalone | 42/42 passed, including quiz TEXT draft/resume/expiry, payment API truth and SSE reconnect |
+| Compose configuration rendering | Local/staging/prod/OAuth passed using fake configuration values |
+| Clean MySQL and MySQL commerce/concurrency | Passed: Flyway V1–V4/validate and 17 commerce tests on MySQL 8.4 |
+| Nginx runtime `nginx -t` | Passed in disposable Docker container with test certificate |
+| Docker local / live browser | Six services healthy, 8/8 live UAT scenarios; provider calls disabled |
+| Remote CI / remote deployment / provider acceptance | Not verified from this working-tree patch |
 
-| Asset | Status | Notes |
-|-------|--------|-------|
-| DB Schema | Complete | Raw schema remains in `database/`; Flyway `V1__init_schema.sql` added for app migration |
-| Seed Data | Complete | `database/skillora_seed_data.sql` sample data |
-| Spring Boot backend | Complete | 314 Java files across 10 modules |
-| Payment Gateway Code | Complete | VNPay HMAC-SHA512 and MoMo HMAC-SHA256 signing/callback validation implemented |
-| Payment Idempotency | Complete | Duplicate successful callbacks do not duplicate coupon usage, enrollments, or notifications |
-| Redis Cache | Complete | Course list/detail cache with 5 minute TTL; simple cache in test/dev by default |
-| Rate Limiting | Initial | App-local limiter for auth writes, chat ask, and payment create/IPN endpoints |
-| Observability | Initial | Actuator health/info/metrics/prometheus enabled |
-| Docker | Initial | Dockerfile and compose for app/MySQL/Redis |
-| CI | Initial | GitHub Actions backend `mvnw verify` workflow |
-| Test Coverage | Initial | JaCoCo gate 60% instruction coverage; latest report: instruction 82.08%, line 85.21%, branch 53.10% |
-| Agent Context | Updated | `.agent/context/*` reflects current implementation state |
+## Release-readiness changes
 
-## External Dependencies
+- Fixed lint/upload state, Maven shell invocation and CI/Playwright server ownership.
+- Proxy refreshes missing/expired access cookies, shares concurrent rotations within one process, preserves sessions on transient failures and clears logout cookies on backend outage.
+- Serialized callback settlement and cancellation with a database order lock, refreshing any previously loaded entity before checking state. H2 test starts two transactions with PENDING already loaded and verifies one enrollment/coupon/event effect.
+- Payment-result confirmation follows persisted order status, with polling while pending. Notification UI listens to the named SSE event, reconnects, and renders backend `content`.
+- Optional Google OAuth now uses browser-bound, two-minute single-use login codes stored as hashes, with a server callback creating httpOnly session cookies. Unverified Google emails are rejected; tokens are not sent in redirect URLs. Google login remains opt-in through a Compose override.
+- Added Nginx config/TLS runbook, provider env wiring, loopback data/API ports and optional unique container prefix for isolated UAT. No existing Docker stack was changed.
 
-| Service | Status | Config |
-|---------|--------|--------|
-| MySQL 8+ | Required | `DB_*`; production should use Flyway + `ddl-auto=validate` |
-| Redis 7 | Production cache | `REDIS_*`; tests disable Redis health and use simple cache |
-| VNPay | Implemented, needs merchant config | `VNPAY_*`, return/IPN endpoints implemented |
-| MoMo | Implemented, needs partner config | `MOMO_*`, create/return/IPN endpoints implemented |
-| Gemini AI | Implemented | `GEMINI_API_KEY`; explicit failure when missing |
-| Bunny Stream | Upload-ticket implemented | `BUNNY_LIBRARY_ID`, `BUNNY_API_KEY`; webhook sync deferred |
-| Cloudinary | Not implemented | Image upload hardening remains future work |
-| SMTP | Not implemented | Password-reset email delivery remains future work |
+## Remaining acceptance
 
-## Remaining Production Gaps
+CI requires clean MySQL migration/commerce suites without skips and a disposable Nginx config check; these passed locally with Docker, remote CI remains pending. Root Compose runs isolated local UAT at localhost:18080. Wishlist/cart/coupon DTOs were corrected against real backend responses. Staging still needs a supplied target, TLS, runtime identity, backup/restore and acceptance. Payment/Bunny/SMTP/Google/Gemini provider acceptance requires separate authorization; no real provider/model calls were used here.
 
-| Gap | Priority | Notes |
-|-----|----------|-------|
-| Validate Flyway + `ddl-auto=validate` against clean MySQL | High | Migration is added but not yet verified against a live clean MySQL database in this pass |
-| VNPay/MoMo sandbox end-to-end validation | High | Code and tests pass, but real provider credentials/callbacks still need sandbox verification |
-| Circuit breakers/retries for external APIs | High | Needed for Gemini, Bunny, MoMo/VNPay create calls |
-| Distributed rate limiting and SSE fanout | Medium | Current limiter/SSE are single-instance |
-| Pending order expiration job | Medium | Manual cancel exists; scheduled cleanup not yet implemented |
-| SMTP and upload security | Medium | Password reset email, Cloudinary/images, assignment file scanning |
+The original audit reviewed 85 of 156 OCR-selected files; 71 remain explicitly deferred. Code changes and passing tests do not establish full-repo manual review or production/business acceptance. Historical '~100% API / 88-90% production-ready' figures are not current readiness measurements.

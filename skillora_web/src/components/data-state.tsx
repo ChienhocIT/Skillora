@@ -14,11 +14,11 @@ export function PageSkeleton({ rows = 6 }: { rows?: number }) {
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {Array.from({ length: Math.min(rows, 3) }).map((_, index) => (
-          <Skeleton key={index} className="h-32 rounded-[--radius-card]" />
+          <Skeleton key={index} className="h-32 rounded-[var(--radius-card)]" />
         ))}
       </div>
       {Array.from({ length: rows }).map((_, index) => (
-        <Skeleton key={`row-${index}`} className="h-14 rounded-[--radius-input]" />
+        <Skeleton key={`row-${index}`} className="h-14 rounded-[var(--radius-input)]" />
       ))}
     </div>
   );
@@ -34,7 +34,7 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <Alert variant="destructive" className="rounded-[--radius-card] border-destructive/30 bg-destructive/5 p-4">
+    <Alert variant="destructive" className="rounded-[var(--radius-card)] border-destructive/30 bg-destructive/5 p-4">
       <AlertCircle className="h-4 w-4" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription className="mt-2 flex flex-col gap-3">
@@ -61,7 +61,7 @@ export function EmptyState({
   return (
     <Card className="border-dashed bg-card/70">
       <CardContent className="flex min-h-56 flex-col items-center justify-center gap-5 p-8 text-center">
-        <div className="rounded-[--radius-card] border bg-muted/70 p-4 text-muted-foreground">
+        <div className="rounded-[var(--radius-card)] border bg-muted/70 p-4 text-muted-foreground">
           <Inbox className="h-5 w-5" />
         </div>
         <div className="space-y-1.5">

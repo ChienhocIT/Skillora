@@ -194,7 +194,7 @@ public class PaymentService {
                 .findByGatewayAndGatewayOrderId(PaymentGateway.MOMO, request.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Payment transaction not found: "
                         + request.getOrderId()));
-        Order order = tx.getOrder();
+        Order order = orderService.lockOrder(tx.getOrder().getId());
         if (request.getAmount() == null || request.getAmount() != toMomoAmount(order.getTotalAmount())) {
             markTransactionFailed(tx, "MoMo amount mismatch", request.getResultCode(), request.getMessage(),
                     request.getTransId() == null ? null : request.getTransId().toString(), request.getPayType(),
@@ -245,7 +245,7 @@ public class PaymentService {
         if (tx == null) {
             return PaymentCallbackResult.invalid("01", "Order not found", null);
         }
-        Order order = tx.getOrder();
+        Order order = orderService.lockOrder(tx.getOrder().getId());
         if (!String.valueOf(toVnPayAmount(order.getTotalAmount())).equals(params.get("vnp_Amount"))) {
             markTransactionFailed(tx, "VNPay amount mismatch", parseInt(params.get("vnp_ResponseCode")),
                     "VNPay amount mismatch", params.get("vnp_TransactionNo"), params.get("vnp_CardType"),

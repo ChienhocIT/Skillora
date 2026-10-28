@@ -266,6 +266,7 @@ export type Quiz = {
   passingScore?: number;
   timeLimitMins?: number | null;
   maxAttempts?: number | null;
+  questionCount?: number;
   questions?: Question[];
   createdAt?: string;
   updatedAt?: string;
@@ -302,7 +303,16 @@ export type QuizAttempt = {
   passed?: boolean;
   startedAt?: string;
   submittedAt?: string;
+  status: "IN_PROGRESS" | "SUBMITTED" | "EXPIRED";
+  deadlineAt?: string | null;
+  serverTime: string;
   answers?: QuizAttemptAnswer[];
+};
+
+export type QuizAnswerInput = {
+  questionId: number;
+  selectedOptionIds?: number[];
+  textAnswer?: string;
 };
 
 export type QuizAttemptAnswer = {
@@ -338,6 +348,7 @@ export type AssignmentSubmission = {
   content?: string | null;
   fileUrl?: string | null;
   score?: number | null;
+  passed?: boolean | null;
   feedback?: string | null;
   submittedAt?: string;
   gradedAt?: string | null;
@@ -350,7 +361,8 @@ export type AssignmentSubmission = {
 export type NotificationItem = {
   id: number;
   title?: string;
-  message: string;
+  content?: string;
+  message?: string;
   type?: string | null;
   linkUrl?: string | null;
   entityType?: string | null;

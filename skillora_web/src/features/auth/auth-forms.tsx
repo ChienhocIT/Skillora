@@ -64,7 +64,14 @@ function errorMessage(error: unknown) {
   return "Request failed. Please try again.";
 }
 
+const subscribeToClient = () => () => {};
+
+function useFormReady() {
+  return React.useSyncExternalStore(subscribeToClient, () => true, () => false);
+}
+
 export function LoginForm({ next }: { next?: string }) {
+  const ready = useFormReady();
   const router = useRouter();
   const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -82,7 +89,8 @@ export function LoginForm({ next }: { next?: string }) {
   });
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+    <form method="post" className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+      <fieldset disabled={!ready} className="space-y-4">
       {mutation.isError ? <Alert variant="destructive"><AlertDescription>{errorMessage(mutation.error)}</AlertDescription></Alert> : null}
       <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>
@@ -99,14 +107,16 @@ export function LoginForm({ next }: { next?: string }) {
           Forgot password
         </Link>
       </div>
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
+      <Button type="submit" className="w-full" disabled={!ready || mutation.isPending}>
         {mutation.isPending ? "Signing in" : "Sign in"}
       </Button>
+      </fieldset>
     </form>
   );
 }
 
 export function RegisterForm() {
+  const ready = useFormReady();
   const router = useRouter();
   const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -132,7 +142,8 @@ export function RegisterForm() {
   });
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+    <form method="post" className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+      <fieldset disabled={!ready} className="space-y-4">
       {mutation.isError ? <Alert variant="destructive"><AlertDescription>{errorMessage(mutation.error)}</AlertDescription></Alert> : null}
       <div className="grid gap-2">
         <Label htmlFor="fullName">Full name</Label>
@@ -171,14 +182,16 @@ export function RegisterForm() {
           </div>
         </>
       ) : null}
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
+      <Button type="submit" className="w-full" disabled={!ready || mutation.isPending}>
         {mutation.isPending ? "Creating account" : "Create account"}
       </Button>
+      </fieldset>
     </form>
   );
 }
 
 export function ForgotPasswordForm() {
+  const ready = useFormReady();
   const [resetToken, setResetToken] = React.useState<string | null>(null);
   const form = useForm<z.infer<typeof forgotSchema>>({
     resolver: zodResolver(forgotSchema),
@@ -193,7 +206,8 @@ export function ForgotPasswordForm() {
   });
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+    <form method="post" className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+      <fieldset disabled={!ready} className="space-y-4">
       {mutation.isError ? <Alert variant="destructive"><AlertDescription>{errorMessage(mutation.error)}</AlertDescription></Alert> : null}
       {mutation.isSuccess ? (
         <Alert>
@@ -207,14 +221,16 @@ export function ForgotPasswordForm() {
         <Label htmlFor="email">Email</Label>
         <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
       </div>
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
+      <Button type="submit" className="w-full" disabled={!ready || mutation.isPending}>
         {mutation.isPending ? "Sending" : "Send reset link"}
       </Button>
+      </fieldset>
     </form>
   );
 }
 
 export function ResetPasswordForm({ token }: { token?: string }) {
+  const ready = useFormReady();
   const router = useRouter();
   const form = useForm<z.infer<typeof resetSchema>>({
     resolver: zodResolver(resetSchema),
@@ -229,7 +245,8 @@ export function ResetPasswordForm({ token }: { token?: string }) {
   });
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+    <form method="post" className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+      <fieldset disabled={!ready} className="space-y-4">
       {mutation.isError ? <Alert variant="destructive"><AlertDescription>{errorMessage(mutation.error)}</AlertDescription></Alert> : null}
       <div className="grid gap-2">
         <Label htmlFor="token">Reset token</Label>
@@ -239,9 +256,10 @@ export function ResetPasswordForm({ token }: { token?: string }) {
         <Label htmlFor="password">New password</Label>
         <Input id="password" type="password" autoComplete="new-password" {...form.register("password")} />
       </div>
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
+      <Button type="submit" className="w-full" disabled={!ready || mutation.isPending}>
         {mutation.isPending ? "Resetting" : "Reset password"}
       </Button>
+      </fieldset>
     </form>
   );
 }

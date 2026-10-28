@@ -77,10 +77,10 @@ export function LessonPage({ lessonId, enrollmentId }: { lessonId: number; enrol
                       label="Ask AI Helper"
                       prompt={`Help me understand the lesson "${lessonData.title}". Give me a concise summary, key terms, and two practice questions.`}
                       variant="outline"
-                      className="text-xs h-9 rounded-[--radius-button]"
+                      className="text-xs h-9 rounded-[var(--radius-button)]"
                     />
-                    {enrollmentId ? (
-                      <Button onClick={() => markDone.mutate()} disabled={markDone.isPending} className="text-xs h-9 font-semibold rounded-[--radius-button]">
+                    {enrollmentId && lessonData.type !== "QUIZ" && lessonData.type !== "ASSIGNMENT" ? (
+                      <Button onClick={() => markDone.mutate()} disabled={markDone.isPending} className="text-xs h-9 font-semibold rounded-[var(--radius-button)]">
                         <CheckCircle2 className="mr-2 h-4 w-4" />
                         Mark Complete
                       </Button>
@@ -89,7 +89,7 @@ export function LessonPage({ lessonId, enrollmentId }: { lessonId: number; enrol
                 }
               />
 
-              <Card className="overflow-hidden border border-border/70 rounded-[--radius-card] shadow-lg">
+              <Card className="overflow-hidden border border-border/70 rounded-[var(--radius-card)] shadow-lg">
                 <CardContent className="p-0">
                   <div className="aspect-video bg-zinc-950 text-zinc-100 flex items-center justify-center relative shadow-inner">
                     {lessonData.video?.status === "READY" && lessonData.video.embedUrl ? (
@@ -117,7 +117,7 @@ export function LessonPage({ lessonId, enrollmentId }: { lessonId: number; enrol
               </Card>
 
               {/* Lesson Written Content */}
-              <Card className="border border-border/70 rounded-[--radius-card]">
+              <Card className="border border-border/70 rounded-[var(--radius-card)]">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base font-bold text-foreground">Lesson Notes</CardTitle>
                 </CardHeader>
@@ -129,14 +129,14 @@ export function LessonPage({ lessonId, enrollmentId }: { lessonId: number; enrol
 
             <aside className="space-y-4">
               {/* Resources Panel */}
-              <Card className="border border-border/70 rounded-[--radius-card]">
+              <Card className="border border-border/70 rounded-[var(--radius-card)]">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-xs font-bold text-foreground">Resources</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   {lessonData.resources?.length ? (
                     lessonData.resources.map((resource) => (
-                      <Button key={resource.id} asChild variant="outline" className="justify-start text-xs h-9 rounded-[--radius-button] border-border/70 text-muted-foreground hover:text-foreground">
+                      <Button key={resource.id} asChild variant="outline" className="justify-start text-xs h-9 rounded-[var(--radius-button)] border-border/70 text-muted-foreground hover:text-foreground">
                         <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer" download>
                           <FileText className="mr-2.5 h-4 w-4 text-primary shrink-0" />
                           <span className="truncate font-medium">{resource.name}</span>
@@ -150,13 +150,13 @@ export function LessonPage({ lessonId, enrollmentId }: { lessonId: number; enrol
               </Card>
 
               {/* Practice Panel (Quiz / Assignment) */}
-              <Card className="border border-border/70 rounded-[--radius-card]">
+              <Card className="border border-border/70 rounded-[var(--radius-card)]">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-xs font-bold text-foreground">Practice Tasks</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   {lessonData.quizId ? (
-                    <Button asChild className="w-full text-xs h-9 font-semibold rounded-[--radius-button]">
+                    <Button asChild className="w-full text-xs h-9 font-semibold rounded-[var(--radius-button)]">
                       <Link href={`/quizzes/${lessonData.quizId}`}>
                         <CheckCircle2 className="mr-2 h-4 w-4 shrink-0" />
                         Start Lesson Quiz
@@ -164,7 +164,7 @@ export function LessonPage({ lessonId, enrollmentId }: { lessonId: number; enrol
                     </Button>
                   ) : null}
                   {lessonData.assignmentId ? (
-                    <Button asChild variant="outline" className="w-full text-xs h-9 font-semibold rounded-[--radius-button] border-border/70 text-muted-foreground hover:text-foreground">
+                    <Button asChild variant="outline" className="w-full text-xs h-9 font-semibold rounded-[var(--radius-button)] border-border/70 text-muted-foreground hover:text-foreground">
                       <Link href={`/assignments/${lessonData.assignmentId}`}>
                         <BookOpen className="mr-2 h-4 w-4 shrink-0" />
                         Submit Assignment
