@@ -1,11 +1,14 @@
 package com.example.skillora_platform.assignment;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +36,8 @@ import com.example.skillora_platform.course.repository.LessonResourceRepository;
 import com.example.skillora_platform.course.repository.LessonVideoRepository;
 import com.example.skillora_platform.course.repository.SectionRepository;
 import com.example.skillora_platform.enrollment.repository.CourseCertificateRepository;
+import com.example.skillora_platform.enrollment.entity.Enrollment;
+import com.example.skillora_platform.enrollment.entity.EnrollmentStatus;
 import com.example.skillora_platform.enrollment.repository.EnrollmentRepository;
 import com.example.skillora_platform.enrollment.repository.LessonProgressRepository;
 import com.example.skillora_platform.enrollment.service.LearningProgressService;
@@ -221,12 +226,17 @@ class AssignmentIntegrationTest {
                         .content(submissionJson("Non enrolled content")))
                 .andExpect(status().isForbidden());
 
-        enroll(setup.courseId(), studentToken);
-
         // Keep the zero-day deadline clearly in the past across database timestamp precision.
-        var enrollment = enrollmentRepository.findByUserIdAndCourseId(student.getId(), setup.courseId()).orElseThrow();
-        enrollment.setEnrolledAt(LocalDateTime.now().minusDays(1));
-        enrollmentRepository.saveAndFlush(enrollment);
+        var enrollment = enrollmentRepository.saveAndFlush(Enrollment.builder()
+                .user(student)
+                .course(courseRepository.findById(setup.courseId()).orElseThrow())
+                .status(EnrollmentStatus.ACTIVE)
+                .amountPaid(BigDecimal.ZERO)
+                .progressPercent(BigDecimal.ZERO)
+                .enrolledAt(LocalDateTime.now().minusDays(1))
+                .build());
+        assertThat(enrollmentRepository.findById(enrollment.getId()).orElseThrow().getEnrolledAt())
+                .isBefore(LocalDateTime.now().minusHours(12));
 
         mockMvc.perform(post("/api/v1/assignments/{id}/submit", assignmentId)
                         .header("Authorization", bearer(studentToken))
