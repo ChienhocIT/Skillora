@@ -2,6 +2,8 @@
 
 Ngày lập: 28/10/2026. [Hiện trạng và khoảng trống B01–B12](PROJECT_REPORT.md). [Bản Docker local](DOCKER_PACKAGE.md). Đây là kế hoạch triển khai tiếp; các tính năng bên dưới chưa được tự động coi là đã làm trong đợt đóng gói.
 
+Cập nhật 29/10/2026: P03 đã hoàn tất và kiểm chứng local. P04.1 đã có cổng hoàn thành bài + đỗ quiz + giảng viên đánh dấu assignment Đạt, khóa cạnh tranh và mã chứng chỉ; P04 vẫn mở cho PDF, tra cứu công khai, quy trình thu hồi và xử lý dữ liệu legacy. Mã ứng dụng đã push ở `8052c35`, bài UAT chạy lặp đã sửa ở `78177e0`. Ưu tiên vận hành hiện tại là xác minh gói Docker từ commit sạch, thay build cũ, kết nối Vercel đúng team `chiendao278-7779` và cấu hình hạ tầng production theo [runbook](VERCEL_DEPLOYMENT.md). Các cổng nghiệm thu provider, nghiệp vụ tài chính và production vẫn bắt buộc.
+
 ## Đích đến và điều kiện lập kế hoạch
 
 Phạm vi đã được chủ sản phẩm xác nhận ngày 28/10/2026: **marketplace khóa học trả phí, nhiều giảng viên**. Thanh toán, hoàn tiền/đối soát, quản lý giảng viên và commission ledger/settlement/payout là yêu cầu bắt buộc của bản ra mắt hoàn chỉnh. Giữ một instance ứng dụng trước để giảm rủi ro vận hành; mở rộng sau khi có nhu cầu. Không tự thêm subscription, app mobile, livestream, SCORM hay multi-tenant khi chưa có yêu cầu.

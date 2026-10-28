@@ -1,10 +1,14 @@
-# Báo cáo hiện trạng Skillora — 28/10/2026
+# Báo cáo hiện trạng Skillora — cập nhật 29/10/2026
 
 ## Kết luận và phạm vi
 
 Skillora đã có một sản phẩm học trực tuyến với ba vai trò học viên, giảng viên và quản trị viên; hiện chạy được thành một stack Docker local gồm frontend, backend, MySQL, Redis, Nginx và Mailpit. Đây là bản đóng gói để bàn giao, phát triển và UAT local. Chưa có bằng chứng vận hành production, thu tiền thật hoặc nghiệm thu các nhà cung cấp bên ngoài.
 
-Mốc nguồn: branch `bugfix/release-readiness-20261028`, HEAD gốc `825469b44ac88852dcdd807a1ec5f87047f20295`; các thay đổi hiện nằm trong working tree, chưa commit/push. Manifest của gói ghi rõ trạng thái này và SHA-256 của source/images. Không diễn giải baseline commit thành toàn bộ mã của image.
+Mốc nguồn: branch `bugfix/release-readiness-20261028`; mã ứng dụng/Docker/Vercel Services đã commit và push ở `8052c35fe903908bcce6f480133497c7cd35396d`. Commit `78177e07813f6fa93200b26a395b912a2db909c9` sửa bài UAT để chạy lại với review đã tồn tại. Manifest của từng gói ghi HEAD, trạng thái working tree, image ID và SHA-256; các gói cũ mang baseline `825469b` là snapshot trước commit, không phải bản phát hành mới.
+
+Kiểm chứng hiện tại: Java 17 `verify` đạt 148 test, không skip; 9 proxy/OAuth test, 42 browser test giả lập và 9 UAT browser trên stack Docker local đạt. Backend cũng vượt readiness trên `PORT=8090` với MySQL/Redis. Gói xuất từ commit mới vẫn cần kiểm tra cold start độc lập trước khi thay gói cũ; kết quả nằm trong sidecar validation cạnh archive ở `artifacts/`.
+
+Deploy Vercel chưa hoàn tất. Đích người dùng chọn là `chiendao278-7779`; phiên connector cũ nhận diện tài khoản khác và trả 403 khi truy cập team đích, sau đó connector bị ngắt khỏi phiên. CLI chưa có credentials. Cấu hình [Vercel Services](VERCEL_DEPLOYMENT.md) đã có trong repo; cần kết nối đúng tài khoản, kiểm tra quyền container runtime và cấu hình MySQL/Redis/SMTP production trước khi nghiệm thu live.
 
 Báo cáo đối chiếu service/DTO/controller, giao diện, migration và kiểm thử thực tế. Đây không phải chứng nhận đã đọc thủ công mọi dòng trong repo. Audit baseline trước đó mới review 85/156 file được OCR chọn, 71 file được ghi rõ là hoãn; review bản đóng gói có checklist riêng trong `docs/reviews`. Không dùng phần trăm “production-ready” để thay thế tiêu chí nghiệm thu.
 
@@ -17,7 +21,7 @@ Chủ sản phẩm đã xác nhận ngày 28/10/2026: **marketplace khóa học 
 | Tài khoản/phân quyền | Đăng ký học viên/giảng viên, đăng nhập JWT, refresh, logout, hồ sơ, đổi/quên mật khẩu; quyền STUDENT/INSTRUCTOR/ADMIN | Luồng đăng nhập ba vai trò đã chạy với API/DB Docker. Google OAuth có mã một lần ràng buộc trình duyệt, TTL, hash trong DB và cookie httpOnly; chưa đăng nhập Google thật. Dev reset có thể trả token trực tiếp, không đồng nghĩa email production đã gửi |
 | Danh mục khóa học | Catalog, tìm kiếm/lọc, chi tiết khóa, chương/bài học, preview, thông tin giảng viên | Catalog/chi tiết qua gateway → Next proxy → API → DB đã được kiểm tra live |
 | Soạn và duyệt khóa | Giảng viên quản lý khóa của mình, chương/bài TEXT/VIDEO/QUIZ/ASSIGNMENT, tài nguyên; gửi duyệt, admin duyệt/từ chối | UAT đã tạo khóa mới có TEXT/QUIZ/ASSIGNMENT và duyệt PUBLISHED. Bunny VIDEO mới có mã tích hợp và kiểm thử giả lập, chưa nghiệm thu upload/transcode/playback thật |
-| Học tập | Ghi danh, dashboard, truy cập bài theo quyền, lưu tiến độ và lịch sử, mã chứng chỉ | Có test service và kiểm tra giao diện học với dữ liệu seed. Quy tắc hoàn thành hiện dựa trên trạng thái bài do client gửi; chưa có cổng bắt buộc đỗ quiz/đạt assignment để cấp chứng chỉ |
+| Học tập | Ghi danh, dashboard, truy cập bài theo quyền, lưu tiến độ và lịch sử, mã chứng chỉ | Backend yêu cầu hoàn thành tất cả bài đã xuất bản, đỗ quiz và assignment được giảng viên đánh dấu Đạt. Không cho client tự hoàn thành bài đánh giá; có kiểm tra cạnh tranh cấp mã. PDF/tra cứu công khai/quy trình thu hồi quản trị và xử lý dữ liệu legacy còn mở |
 | Quiz | Cấu hình câu hỏi/lựa chọn, điểm, passScore, số lần làm; nộp/chấm/lịch sử | Backend có xử lý TEXT nhưng giao diện học viên mới gửi lựa chọn. Thời gian giới hạn chưa được server cưỡng chế bằng phiên làm bài/deadline |
 | Assignment | Nội dung/link bài nộp, nộp lại, trạng thái, giảng viên chấm và phản hồi; hạn/late flag | Không có kho upload file bài tập được quản lý; link bên ngoài không phải dịch vụ lưu trữ/scanning |
 | Thương mại | Wishlist, giỏ hàng, coupon, checkout, order, hủy/thử lại, adapter VNPay/MoMo, enrollment sau thanh toán | Đã sửa sai hợp đồng wishlist/cart/coupon phát hiện bằng dữ liệu thật. Checkout local tạo đơn PENDING; payment tắt. Callback/settlement/cancel cạnh tranh được kiểm tra bằng giao dịch MySQL thật và gateway giả |
@@ -32,8 +36,8 @@ Chủ sản phẩm đã xác nhận ngày 28/10/2026: **marketplace khóa học 
 |---|---|---|
 | B01 | Đã chốt marketplace trả phí nhiều giảng viên; còn cần chốt chính sách hoàn thành/chứng chỉ, hoàn tiền, hoa hồng/kỳ chốt/payout, kiểm duyệt giảng viên | Chủ sản phẩm duyệt chính sách, ma trận quyền và các tình huống nghiệp vụ trong phạm vi đã xác nhận |
 | B02 | Chưa có xác minh email/luồng xét duyệt tư cách giảng viên hoàn chỉnh; tự đăng ký giảng viên chưa tương đương được xác minh | Với marketplace công khai: xác minh email, trạng thái/tiêu chí duyệt, quyền trước/sau duyệt và chống lạm dụng được nghiệm thu |
-| B03 | ?? tri?n khai P03: start/resume/deadline, l??t ??ng th?i, TEXT UI v? gi? k?n ??p ?n | Gate backend/MySQL/browser/Docker cu?i ??t t?i IMPLEMENTATION_P03_P04; kh?ng ??ng ngh?a c? proctoring/ch?ng gian l?n to?n di?n |
-| B04 | ?? c? c?ng ?i?u ki?n ch?ng ch? theo t?t c? b?i ?? xu?t b?n + quiz ?? + assignment ???c gi?ng vi?n ??nh d?u ??t. Ch?a c? PDF/tra c?u m? c?ng khai/quy tr?nh qu?n tr? thu h?i ho?n ch?nh | Ho?n t?t c?c ch?c n?ng ch?ng ch? c?n l?i; x?c nh?n l?i grade c? ch?a c? quy?t ??nh, ??nh gi?/recompute d? li?u legacy tr??c go-live |
+| B03 | ?? tri?n khai P03: start/resume/deadline tr?n server, gi?i h?n l??t l?m ??ng th?i, TEXT UI v? gi? k?n ??p ?n tr??c khi l?m | Gate backend/MySQL/browser/Docker ???c m? t? t?i [IMPLEMENTATION_P03_P04](IMPLEMENTATION_P03_P04.md); ch?a bao g?m proctoring/ch?ng gian l?n to?n di?n |
+| B04 | ?? c? c?ng ch?ng ch?: t?t c? b?i xu?t b?n ho?n th?nh, quiz ?? v? assignment ???c gi?ng vi?n ??nh d?u ??t | C?n PDF, tra c?u m? c?ng khai, quy tr?nh qu?n tr? thu h?i v? recompute d? li?u legacy; grade c? thi?u quy?t ??nh c?n gi?ng vi?n x?c nh?n l?i |
 | B05 | Course version mới cập nhật metadata (title/subtitle/description/thumbnail); snapshot chưa tạo thành luồng xuất bản giáo trình có version và enrollment pin | Chỉnh sửa bản nháp của giáo trình đang bán, review/approve/rollback, học viên cũ/mới nhận đúng phiên bản mà không mất tiến độ |
 | B06 | Avatar/thumbnail/tài nguyên/bài tập chủ yếu dùng URL, chưa có pipeline upload quản lý; video cần Bunny thật | Storage riêng, giới hạn size/type, quyền truy cập, upload hết hạn, retry/cleanup, kiểm tra file theo chính sách; Bunny webhook/playback được nghiệm thu |
 | B07 | Chưa nghiệm thu thanh toán merchant/sandbox thật; đơn pending chưa có hết hạn tự động, đối soát chưa thành quy trình | Ký/xác minh callback, duplicate/out-of-order, timeout/retry, phí/số tiền, job hết hạn, đối soát giao dịch và hỗ trợ vận hành. Callback thành công sau hủy phải có xử lý capture/refund, không tự cấp học trái trạng thái |
